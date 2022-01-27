@@ -35,7 +35,14 @@ from .role import Role
 from .snowflake import Snowflake
 from .user import User
 
-__all__ = ("Interaction",)
+__all__ = (
+    "InteractionData",
+    "Interaction",
+    "SelectOption",
+    "ApplicationCommand",
+    "Choice",
+    "Option",
+)
 
 
 class _InteractionDataResolvedOptional(TypedDict, total=False):
@@ -123,3 +130,38 @@ class _SelectOptionOptional(TypedDict, total=False):
 class SelectOption(_SelectOptionOptional):
     label: str
     value: str
+
+
+class _ApplicationCommandOptional(TypedDict, total=False):
+    options: List[Union[ApplicationCommand, Option]]
+
+
+class ApplicationCommand(_ApplicationCommandOptional):
+    name: str
+    description: str
+    type: int  # enum
+
+
+class _ChoiceOptional(TypedDict, total=False):
+    ...
+
+
+class Choice(_ChoiceOptional):
+    name: str
+    value: Union[str, int, float]
+
+
+class _OptionOptional(TypedDict, total=False):
+    required: bool
+    choices: List[Choice]
+    options: List[Option]
+    channel_types: List[int]  # List[enum]
+    min_value: float
+    max_value: float
+    autocomplete: bool
+
+
+class Option(_OptionOptional):
+    type: int  # enum
+    name: str
+    description: str

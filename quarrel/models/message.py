@@ -31,9 +31,9 @@ __all__ = ("Message",)
 if TYPE_CHECKING:
     from ..state import State
     from ..types.message import Message as MessageData
-    from .channel import Channels
+    from .channel import Channel
 
 
 class Message:
-    def __init__(self, data: MessageData, channel: Channels, state: State) -> None:
+    def __init__(self, data: MessageData, channel: Channel, state: State) -> None:
         ...

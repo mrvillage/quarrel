@@ -31,7 +31,7 @@ from ..enums import ChannelType
 from ..missing import MISSING
 
 __all__ = (
-    "Channel",
+    "RootChannel",
     "TextChannel",
     "DMChannel",
     "VoiceChannel",
@@ -39,7 +39,7 @@ __all__ = (
     "Thread",
     "StageChannel",
     "GuildChannel",
-    "Channels",
+    "Channel",
     "ChannelFactory",
 )
 
@@ -62,7 +62,7 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound="Union[TextChannel, VoiceChannel]")
 
 
-class Channel(Generic[T]):
+class RootChannel(Generic[T]):
     def __new__(cls, data: ChannelData, guild: Optional[Guild], state: State) -> T:
         type = data["type"]
         if type in {0, 5}:
@@ -136,5 +136,5 @@ GuildChannel = Union[
 ]
 
 
-Channels = Union[TextChannel, VoiceChannel]
-ChannelFactory = Channel[Channels]
+Channel = Union[TextChannel, VoiceChannel]
+ChannelFactory = RootChannel[Channel]

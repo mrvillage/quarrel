@@ -24,26 +24,39 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from .. import utils
 from ..enums import InteractionType
 from ..missing import MISSING
-from ..models import Member, Message, User
+from ..models import Member, Message, Role, User
 
 __all__ = ("Interaction",)
 
 if TYPE_CHECKING:
     from typing import Union
 
-    from ..models import Channels, Guild
+    from ..models import Channel, Guild
     from ..state import State
     from ..types.interactions import Interaction as InteractionData
     from ..types.interactions import InteractionData as InteractionDataData
 
 
 class Interaction:
-    __slots__ = ()
+    __slots__ = (
+        "id",
+        "application_id",
+        "type",
+        "token",
+        "data",
+        "guild_id",
+        "channel_id",
+        "user",
+        "message",
+        "locale",
+        "guild_locale",
+        "_state",
+    )
 
     def __init__(self, data: InteractionData, state: State) -> None:
         self.id: int = int(data["id"])
@@ -56,8 +69,9 @@ class Interaction:
         self.channel_id: int = utils.get_int_or_missing(data.get("channel_id", MISSING))
         message = data.get("message", MISSING)
         member = data.get("member", MISSING)
-        if member is not MISSING:
-            member = Member(member, self.guild, state)
+        guild = self.guild
+        if member is not MISSING and guild is not None:
+            member = Member(member, guild, state)
             self.user: Union[Member, User] = member
         else:
             user = User(data.get("user", MISSING), state)
@@ -70,9 +84,24 @@ class Interaction:
         self._state: State = state
 
     @property
-    def channel(self) -> Channels:
+    def channel(self) -> Channel:
         ...
 
     @property
-    def guild(self) -> Guild:
+    def guild(self) -> Optional[Guild]:
+        return self._state.get_guild(self.guild_id)
+
+    def get_user_from_resolved(self, id: int) -> User:
+        ...
+
+    def get_member_from_resolved(self, id: int) -> Member:
+        ...
+
+    def get_role_from_resolver(self, id: int) -> Role:
+        ...
+
+    def get_channel_from_resolved(self, id: int) -> Channel:
+        ...
+
+    def get_message_from_resolved(self, id: int) -> Message:
         ...

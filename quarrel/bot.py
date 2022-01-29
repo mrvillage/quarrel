@@ -103,6 +103,7 @@ class Bot:
             await self.event_handler.handle(message["t"], message["d"])
 
     async def run(self):
+        await self.upload_application_commands()
         await self.connect()
 
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
@@ -158,6 +159,9 @@ class Bot:
     def add_command(self, command: ApplicationCommand) -> ApplicationCommand:
         self.commands[(command.name, command.type)] = command
         return command
+
+    async def upload_application_commands(self) -> None:
+        global_commands = [i.to_payload() for i in self.commands.values()]
 
     async def on_ready(self) -> None:
         ...

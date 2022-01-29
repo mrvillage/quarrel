@@ -24,7 +24,14 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 __all__ = ("DiscordException", "HTTPException")
+
+if TYPE_CHECKING:
+    from typing import List
+
+    from .interactions import Option
 
 
 class DiscordException(Exception):
@@ -57,3 +64,9 @@ class MethodNotAllowed(HTTPException):
 
 class ServerError(HTTPException):
     ...
+
+
+class ConverterError(DiscordException):
+    def __init__(self, option: Option, errors: List[Exception]) -> None:
+        self.option: Option = option
+        self.errors: List[Exception] = errors

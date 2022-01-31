@@ -39,6 +39,7 @@ __all__ = (
     "InteractionData",
     "Interaction",
     "SelectOption",
+    "PartialApplicationCommand",
     "ApplicationCommand",
     "Choice",
     "Option",
@@ -132,14 +133,25 @@ class SelectOption(_SelectOptionOptional):
     value: str
 
 
-class _ApplicationCommandOptional(TypedDict, total=False):
-    options: List[Union[ApplicationCommand, Option]]
+class _PartialApplicationCommandOptional(TypedDict, total=False):
+    options: List[Union[PartialApplicationCommand, Option]]
 
 
-class ApplicationCommand(_ApplicationCommandOptional):
+class PartialApplicationCommand(_PartialApplicationCommandOptional):
+    type: int  # enum
     name: str
     description: str
-    type: int  # enum
+
+
+class _ApplicationCommandOptional(TypedDict, total=False):
+    guild_id: Snowflake
+    default_permission: bool
+
+
+class ApplicationCommand(PartialApplicationCommand, _ApplicationCommandOptional):
+    id: Snowflake
+    application_id: int
+    version: Snowflake
 
 
 class _ChoiceOptional(TypedDict, total=False):

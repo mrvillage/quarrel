@@ -26,12 +26,15 @@ from __future__ import annotations
 
 import asyncio
 import json
+import random
 import sys
 import time
 import zlib
 from typing import TYPE_CHECKING
 
 import aiohttp
+
+from .missing import MISSING
 
 __all__ = ("GatewayHandler",)
 
@@ -40,6 +43,7 @@ if TYPE_CHECKING:
     from zlib import _Decompress  # type: ignore
 
     from .bot import Bot
+    from .missing import Missing
     from .models import Guild
     from .types.gateway import (
         GatewayDispatch,
@@ -63,6 +67,9 @@ class Heartbeat:
         self.last_send: float = time.perf_counter()
 
     async def send(self) -> None:
+        if not self.handler.acked:
+            # stop and resume
+            ...
         await self.handler.gateway.socket.send_json(
             {"op": 1, "d": self.handler.sequence}
         )
@@ -165,6 +172,9 @@ class Gateway:
             self._buffer = bytearray()
         return json.loads(data)
 
+    async def close(self, code: int, message: Missing[str] = MISSING) -> None:
+        await self.socket.close(code=code, message=(message or "").encode())
+
 
 class GatewayHandler:
     def __init__(
@@ -185,6 +195,7 @@ class GatewayHandler:
         self.sequence: Optional[int] = sequence
         self.heartbeat: Optional[Heartbeat] = None
         self.session_id: Optional[str] = None
+        self.acked: bool = False
 
     async def __aenter__(self) -> GatewayHandler:
         return self
@@ -206,7 +217,7 @@ class GatewayHandler:
         self, message: GatewayDispatch
     ) -> Optional[GatewayDispatch]:
         op = message.get("op")
-        data = message.get("d")
+        data = message.get("d", {})
         sequence = message.get("s")
 
         if sequence is not None:
@@ -252,11 +263,12 @@ class GatewayHandler:
     async def handle_hello(self, data: Dict[str, Any]) -> None:
         self.heartbeat_interval: float = data["heartbeat_interval"] / 1000
         self.heartbeat = Heartbeat(self, self.heartbeat_interval)
+        await asyncio.sleep(self.heartbeat_interval * random.random())
         await self.heartbeat.send()
         self.heartbeat.start()
 
     async def handle_heartbeat_ack(self, data: Dict[str, Any]) -> None:
-        ...
+        self.acked = True
 
     async def resume(self) -> None:
         if TYPE_CHECKING:
@@ -273,8 +285,8 @@ class GatewayHandler:
             "token": self.bot.token,
             "properties": {
                 "$os": sys.platform,
-                "$browser": "disapi.py",
-                "$device": "disapi.py",
+                "$browser": "quarrel",
+                "$device": "quarrel",
             },
             "compress": True,
             "large_threshold": 250,

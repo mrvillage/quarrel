@@ -26,19 +26,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .models import Guild, Message, User
+
 __all__ = ("State",)
 
 if TYPE_CHECKING:
     from typing import Dict, List, Optional
 
     from .bot import Bot
-    from .models import Guild, User
+    from .missing import Missing
+    from .models import Channel
+    from .types.message import Message as MessageData
+    from .types.user import User as UserData
 
 
 class State:
     def __init__(self, bot: Bot) -> None:
         self.bot: Bot = bot
         self._guilds: Dict[int, Guild] = {}
+        self._messages: Dict[int, Message] = {}
         self._users: Dict[int, User] = {}
 
     @property
@@ -55,11 +61,34 @@ class State:
         self._guilds.pop(guild.id)
 
     @property
+    def message(self) -> List[Message]:
+        return list(self._messages.values())
+
+    def add_message(self, message: Message, /) -> Message:
+        self._messages[message.id] = message
+        return message
+
+    def get_message(self, message_id: int, /) -> Optional[Message]:
+        return self._messages.get(message_id)
+
+    def remove_message(self, message: Message, /) -> None:
+        self._messages.pop(message.id)
+
+    def parse_message(
+        self, channel: Missing[Channel], data: MessageData, /, partial: bool = False
+    ) -> Message:
+        id = int(data["id"])
+        if id in self._messages:
+            return self._messages[id].update(data, partial=partial)
+        return self.add_message(Message(data, channel, self))
+
+    @property
     def users(self) -> List[User]:
         return list(self._users.values())
 
-    def add_user(self, user: User, /) -> None:
+    def add_user(self, user: User, /) -> User:
         self._users[user.id] = user
+        return user
 
     def get_user(self, user_id: int, /) -> Optional[User]:
         return self._users.get(user_id)
@@ -67,7 +96,8 @@ class State:
     def remove_user(self, user: User, /) -> None:
         self._users.pop(user.id)
 
-    def try_add_user(self, user: User, /) -> User:
-        if user.id not in self._users:
-            self.add_user(user)
-        return user
+    def parse_user(self, data: UserData, /) -> User:
+        id = int(data["id"])
+        if id in self._users:
+            return self._users[id].update(data)
+        return self.add_user(User(data, self))

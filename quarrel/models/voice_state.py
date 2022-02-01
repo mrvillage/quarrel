@@ -42,6 +42,10 @@ if TYPE_CHECKING:
 
 class VoiceState:
     def __init__(self, data: VoiceStateData, state: State) -> None:
+        self._state: State = state
+        self.update(data)
+
+    def update(self, data:VoiceStateData) -> VoiceState:
         self.channel_id: Optional[int] = utils.get_int_or_none(data["channel_id"])
         self.user_id: int = int(data["user_id"])
         self.session_id: str = data["session_id"]
@@ -59,4 +63,4 @@ class VoiceState:
             data.get("guild_id", MISSING)
         )
         self.self_stream: Missing[bool] = data.get("self_stream", MISSING)
-        self._state: State = state
+        return self

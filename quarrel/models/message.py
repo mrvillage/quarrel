@@ -29,11 +29,20 @@ from typing import TYPE_CHECKING
 __all__ = ("Message",)
 
 if TYPE_CHECKING:
+    from ..missing import Missing
     from ..state import State
     from ..types.message import Message as MessageData
     from .channel import Channel
 
 
 class Message:
-    def __init__(self, data: MessageData, channel: Channel, state: State) -> None:
-        ...
+    def __init__(
+        self, data: MessageData, channel: Missing[Channel], state: State
+    ) -> None:
+        self.channel: Missing[Channel] = channel
+        self._state: State = state
+        self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(self, data: MessageData, *, partial: bool = False) -> Message:
+        return self

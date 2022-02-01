@@ -60,7 +60,7 @@ if TYPE_CHECKING:
     from ..types.permissions import PermissionOverwrite
     from .guild import Guild
 
-T = TypeVar("T", bound="Union[TextChannel, VoiceChannel]")
+T = TypeVar("T", bound="Channel")
 
 
 class RootChannel(Generic[T]):
@@ -87,6 +87,13 @@ class TextChannel:
     def __init__(
         self, data: Union[TextChannelData, NewsChannelData], guild: Guild, state: State
     ) -> None:
+        self.guild: Guild = guild
+        self._state: State = state
+        self.update(data)
+
+    def update(
+        self, data: Union[TextChannelData, NewsChannelData], /, *, partial: bool = False
+    ) -> TextChannel:
         self.id: int = int(data["id"])
         self.type: ChannelType = ChannelType(data["type"])
         self.guild_id: int = int(data["guild_id"])
@@ -100,42 +107,85 @@ class TextChannel:
         self.parent_id: Missing[Optional[int]] = utils.get_int_or_none_or_missing(
             data.get("parent_id", MISSING)
         )
+        return self
 
 
 class DMChannel:
     def __init__(self, data: DMChannelData, state: State) -> None:
-        ...
+        self._state: State = state
+        self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(self, data: DMChannelData, /, *, partial: bool = False) -> DMChannel:
+        return self
 
 
 class VoiceChannel:
     def __init__(self, data: VoiceChannelData, guild: Guild, state: State) -> None:
-        ...
+        self.guild: Guild = guild
+        self._state: State = state
+        self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(
+        self, data: VoiceChannelData, /, *, partial: bool = False
+    ) -> VoiceChannel:
+        return self
 
 
 class CategoryChannel:
     def __init__(self, data: CategoryChannelData, guild: Guild, state: State) -> None:
-        ...
+        self.guild: Guild = guild
+        self._state: State = state
+        self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(
+        self, data: CategoryChannelData, /, *, partial: bool = False
+    ) -> CategoryChannel:
+        return self
 
 
 class StoreChannel:
     def __init__(self, data: StoreChannelData, guild: Guild, state: State) -> None:
-        ...
+        self.guild: Guild = guild
+        self._state: State = state
+        self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(
+        self, data: StoreChannelData, /, *, partial: bool = False
+    ) -> StoreChannel:
+        return self
 
 
 class Thread:
     def __init__(self, data: ThreadData, guild: Guild, state: State) -> None:
-        ...
+        self.guild: Guild = guild
+        self._state: State = state
+        self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(self, data: ThreadData, /, *, partial: bool = False) -> Thread:
+        return self
 
 
 class StageChannel:
-    def __init__(self, data: StageChannelData, sguild: Guild, tate: State) -> None:
-        ...
+    def __init__(self, data: StageChannelData, guild: Guild, state: State) -> None:
+        self.guild: Guild = guild
+        self._state: State = state
+        self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(
+        self, data: StageChannelData, /, *, partial: bool = False
+    ) -> StageChannel:
+        return self
 
 
 GuildChannel = Union[
     TextChannel, VoiceChannel, CategoryChannel, StoreChannel, Thread, StageChannel
 ]
-
-
-Channel = Union[TextChannel, VoiceChannel]
+Channel = Union[GuildChannel, DMChannel]
 ChannelFactory = RootChannel[Channel]
+GuildChannelFactory = RootChannel[GuildChannel]

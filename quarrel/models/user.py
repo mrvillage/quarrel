@@ -40,7 +40,11 @@ if TYPE_CHECKING:
 
 class User:
     def __init__(self, data: UserData, state: State) -> None:
+        self._state: State = state
         self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(self, data: UserData) -> User:
         self.username: str = data["username"]
         self.discriminator: str = data["discriminator"]
         self.avatar: Optional[str] = data["avatar"]
@@ -52,5 +56,4 @@ class User:
         self.verified: Missing[bool] = data.get("verified", MISSING)
         self.email: Missing[Optional[str]] = data.get("email", MISSING)
         self.public_flags: int = data.get("public_flags", 0)
-
-        self._state: State = state
+        return self

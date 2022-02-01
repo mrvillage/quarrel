@@ -41,18 +41,25 @@ if TYPE_CHECKING:
 
 class Sticker:
     def __init__(self, data: StickerData, guild: Guild, state: State) -> None:
+        self.guild: Guild = guild
+        self._state: State = state
         self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(self, data: StickerData) -> Sticker:
         self.name: str = data["name"]
         self.description: Optional[str] = data["description"]
         self.tags: List[str] = data["tags"].split(",")
         self.type: StickerType = StickerType(data["type"])
         self.format_type: StickerFormat = StickerFormat(data["format_type"])
 
-        self.pack_id: Missing[int] = utils.get_int_or_missing(data.get("pack_id", MISSING))
+        self.pack_id: Missing[int] = utils.get_int_or_missing(
+            data.get("pack_id", MISSING)
+        )
         self.available: Missing[bool] = data.get("available", MISSING)
-        self.guild_id: Missing[int] = utils.get_int_or_missing(data.get("guild_id", MISSING))
+        self.guild_id: Missing[int] = utils.get_int_or_missing(
+            data.get("guild_id", MISSING)
+        )
         # self.user
         self.sort_value: Missing[int] = data.get("sort_value", MISSING)
-
-        self.guild: Guild = guild
-        self._state: State = state
+        return self

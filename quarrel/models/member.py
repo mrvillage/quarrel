@@ -40,7 +40,12 @@ if TYPE_CHECKING:
 
 class Member:
     def __init__(self, data: MemberData, guild: Guild, state: State) -> None:
+        self.guild: Guild = guild
+        self._state: State = state
         self.id: int = int(data["user"]["id"])
+        self.update(data)
+
+    def update(self, data: MemberData) -> Member:
         self.joined_at: str = data["joined_at"]
         self.deaf: bool = data["deaf"]
         self.mute: bool = data["mute"]
@@ -53,7 +58,5 @@ class Member:
         # only included when in an interaction object
         # self.permissions
 
-        self.user: User = state.try_add_user(User(data["user"], state))
-
-        self.guild: Guild = guild
-        self._state: State = state
+        self.user: User = self._state.parse_user(data["user"])
+        return self

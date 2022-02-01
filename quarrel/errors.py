@@ -26,19 +26,32 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-__all__ = ("DiscordException", "HTTPException")
+__all__ = (
+    "QuarrelException",
+    "HTTPException",
+    "BadRequest",
+    "Unauthorized",
+    "Forbidden",
+    "NotFound",
+    "MethodNotAllowed",
+    "ServerError",
+    "ConversionError",
+    "OptionError",
+    "CheckError",
+)
 
 if TYPE_CHECKING:
-    from typing import List
+    from typing import Any, List
 
     from .interactions import Option
+    from .missing import Missing
 
 
-class DiscordException(Exception):
+class QuarrelException(Exception):
     ...
 
 
-class HTTPException(DiscordException):
+class HTTPException(QuarrelException):
     ...
 
 
@@ -66,7 +79,20 @@ class ServerError(HTTPException):
     ...
 
 
-class ConverterError(DiscordException):
-    def __init__(self, option: Option, errors: List[Exception]) -> None:
+class ConversionError(QuarrelException):
+    def __init__(self, option: Option, value: Any, errors: List[Exception]) -> None:
         self.option: Option = option
+        self.value: Missing[Any] = value
         self.errors: List[Exception] = errors
+
+
+class OptionError(QuarrelException):
+    def __init__(self, option: Option, value: Missing[Any], error: Exception) -> None:
+        self.option: Option = option
+        self.value: Missing[Any] = value
+        self.error: Exception = error
+
+
+class CheckError(QuarrelException):
+    def __init__(self, error: Exception) -> None:
+        self.error: Exception = error

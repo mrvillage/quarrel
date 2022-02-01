@@ -194,9 +194,6 @@ class Bot:
                     (int(command.get("guild_id", 0)), command["name"])
                 ]
 
-    async def on_ready(self) -> None:
-        ...
-
     async def on_interaction_create(self, interaction: Interaction) -> None:
         await self.process_interaction(interaction)
 

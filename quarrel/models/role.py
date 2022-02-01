@@ -40,7 +40,12 @@ if TYPE_CHECKING:
 
 class Role:
     def __init__(self, data: RoleData, guild: Guild, state: State) -> None:
+        self.guild: Guild = guild
+        self._state: State = state
         self.id: int = int(data["id"])
+        self.update(data)
+
+    def update(self, data: RoleData) -> Role:
         self.name: str = data["name"]
         self._color: int = data["color"]
         self.hoist: bool = data["hoist"]
@@ -52,6 +57,4 @@ class Role:
         self._icon: Missing[Optional[str]] = data.get("icon", MISSING)
         self._unicode_emoji: Missing[Optional[str]] = data.get("unicode_emoji", MISSING)
         self._tags: Missing[RoleTags] = data.get("tags", MISSING)
-
-        self.guild: Guild = guild
-        self._state: State = state
+        return self

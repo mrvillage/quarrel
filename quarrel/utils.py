@@ -25,6 +25,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
+import sys
+import traceback
 from typing import TYPE_CHECKING
 
 from .missing import MISSING
@@ -35,6 +37,8 @@ __all__ = (
     "get_int_or_none_or_missing",
     "get_datetime_or_missing",
     "get_datetime_or_none",
+    "print_exception_with_header",
+    "print_exception",
 )
 
 if TYPE_CHECKING:
@@ -67,3 +71,12 @@ def get_datetime_or_missing(value: Any) -> Missing[datetime.datetime]:
 
 def get_datetime_or_none(value: Optional[Any]) -> Optional[datetime.datetime]:
     return None if value is None else datetime.datetime.fromisoformat(value)
+
+
+def print_exception_with_header(header: str, error: Exception) -> None:
+    print(header, file=sys.stderr)
+    print_exception(error)
+
+
+def print_exception(error: Exception) -> None:
+    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

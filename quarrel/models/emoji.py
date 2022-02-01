@@ -44,24 +44,27 @@ if TYPE_CHECKING:
 
 class Emoji:
     def __init__(self, data: EmojiData, guild: Guild, state: State) -> None:
+        self.guild: Guild = guild
+        self._state: State = state
         self.id: Optional[int] = utils.get_int_or_none(data["id"])
+        self.update(data)
+
+    def update(self, data: EmojiData) -> Emoji:
         self.name: Optional[str] = data["name"]
 
         self.roles: List[Role] = [
             r
             for i in data.get("roles", [])
-            if (r := guild.get_role(int(i))) is not None
+            if (r := self.guild.get_role(int(i))) is not None
         ]
         self.user: Missing[User] = (
             u
             if (ud := data.get("user", MISSING)) is not MISSING
-            and (u := state.get_user(int(ud["id"]))) is not None
+            and (u := self._state.get_user(int(ud["id"]))) is not None
             else MISSING
         )
         self.require_colons: Missing[bool] = data.get("require_colons", MISSING)
         self.managed: Missing[bool] = data.get("managed", MISSING)
         self.animated: Missing[bool] = data.get("animated", MISSING)
         self.available: Missing[bool] = data.get("available", MISSING)
-
-        self.guild: Guild = guild
-        self._state: State = state
+        return self

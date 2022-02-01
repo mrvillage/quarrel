@@ -32,8 +32,9 @@ __all__ = ("Message",)
 
 
 class _MessageOptional(TypedDict, total=False):
-    ...
+    guild_id: Snowflake
 
 
 class Message(_MessageOptional):
-    ...
+    id: Snowflake
+    channel_id: Snowflake

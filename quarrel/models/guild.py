@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import secrets
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Set
 
 from .. import utils
 from ..enums import (
@@ -39,6 +39,7 @@ from ..enums import (
 )
 from ..flags import SystemChannelFlags
 from ..missing import MISSING
+from .channel import GuildChannel, GuildChannelFactory
 from .emoji import Emoji
 from .member import Member
 from .role import Role
@@ -53,6 +54,7 @@ if TYPE_CHECKING:
 
     from ..missing import Missing
     from ..state import State
+    from ..types.channel import GuildChannel as GuildChannelData
     from ..types.gateway import GuildMembersChunk
     from ..types.guild import Guild as GuildData
     from ..types.guild import GuildFeature
@@ -60,7 +62,10 @@ if TYPE_CHECKING:
 
 class Guild:
     def __init__(self, data: GuildData, state: State) -> None:
+        self._state: State = state
         self.id: int = int(data["id"])
+
+    def update(self, data: GuildData) -> Guild:
         self.name: str = data["name"]
         self._icon: Optional[str] = data["icon"]
         self._splash: Optional[str] = data["splash"]
@@ -131,24 +136,28 @@ class Guild:
         # self.welcome_screen
         self.premium_progress_bar_enabled: bool = data["premium_progress_bar_enabled"]
 
-        roles = [Role(i, self, state) for i in data["roles"]]
+        roles = [Role(i, self, self._state) for i in data["roles"]]
         self._roles: Dict[int, Role] = {r.id: r for r in roles}
-        emojis = [Emoji(i, self, state) for i in data["emojis"]]
+        emojis = [Emoji(i, self, self._state) for i in data["emojis"]]
         self._emojis: Dict[int, Emoji] = {e.id: e for e in emojis if e.id is not None}
 
-        voice_states = [VoiceState(i, state) for i in data.get("voice_states", [])]
+        voice_states = [
+            VoiceState(i, self._state) for i in data.get("voice_states", [])
+        ]
         self.voice_states: Dict[int, VoiceState] = {v.user_id: v for v in voice_states}
-        members = [Member(i, self, state) for i in data.get("members", [])]
+        members = [Member(i, self, self._state) for i in data.get("members", [])]
         self._members: Dict[int, Member] = {m.id: m for m in members}
-        # self.channels
-        # self.threads
+        channels = [
+            GuildChannelFactory(i, self, self._state)
+            for i in [*data.get("channels", []), *data.get("threads", [])]
+        ]
+        self._channels: Dict[int, GuildChannel] = {c.id: c for c in channels}
         # self.presences
         # self.stage_instances
-        stickers = [Sticker(i, self, state) for i in data.get("stickers", [])]
+        stickers = [Sticker(i, self, self._state) for i in data.get("stickers", [])]
         self.stickers: Dict[int, Sticker] = {s.id: s for s in stickers}
         # self.guild_scheduled_events
-
-        self._state: State = state
+        return self
 
     async def chunk(self) -> None:
         self._chunk_event = asyncio.Event()
@@ -194,22 +203,39 @@ class Guild:
         await self._chunk_event.wait()
 
     @property
-    def emojis(self) -> List[Emoji]:
-        return list(self._emojis.values())
+    def channels(self) -> Set[GuildChannel]:
+        return set(self._channels.values())
+
+    def get_channel(self, id: int, /) -> Optional[GuildChannel]:
+        return self._channels.get(id)
+
+    def parse_channel(
+        self, data: GuildChannelData, /, *, partial: bool = False
+    ) -> GuildChannel:
+        id = int(data["id"])
+        if (channel := self.get_channel(id)) is not None:
+            return channel.update(data, partial=partial)  # type: ignore
+        channel = GuildChannelFactory(data, self, self._state)
+        self._channels[channel.id] = channel
+        return channel
+
+    @property
+    def emojis(self) -> Set[Emoji]:
+        return set(self._emojis.values())
 
     def get_emoji(self, id: int, /) -> Optional[Emoji]:
         return self._emojis.get(id)
 
     @property
-    def members(self) -> List[Member]:
-        return list(self._members.values())
+    def members(self) -> Set[Member]:
+        return set(self._members.values())
 
     def get_member(self, id: int, /) -> Optional[Member]:
         return self._members.get(id)
 
     @property
-    def roles(self) -> List[Role]:
-        return list(self._roles.values())
+    def roles(self) -> Set[Role]:
+        return set(self._roles.values())
 
     def get_role(self, id: int, /) -> Optional[Role]:
         return self._roles.get(id)

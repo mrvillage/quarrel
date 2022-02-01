@@ -27,7 +27,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..enums import ApplicationCommandOptionType
-from ..errors import ConverterError
+from ..errors import ConversionError
 from ..missing import MISSING
 
 __all__ = ("Option", "Options")
@@ -169,7 +169,7 @@ class Option:
                     return await converter(interaction, options, value)
                 except Exception as e:
                     errors.append(e)
-            raise ConverterError(self, errors)
+            raise ConversionError(self, value, errors)
         else:
             return value
 

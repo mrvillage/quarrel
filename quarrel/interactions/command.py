@@ -26,7 +26,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .. import utils
 from ..enums import ApplicationCommandOptionType, ApplicationCommandType
+from ..errors import CheckError, ConversionError, OptionError
 from ..missing import MISSING
 from .option import Options
 
@@ -135,8 +137,36 @@ class SlashCommand(ApplicationCommand):
                 if hasattr(options, name):
                     continue
                 value = arguments.get(name, MISSING)
+                option = parameters[name]
+                try:
+                    if value is MISSING:
+                        default = option.default
+                        if callable(default):
+                            default = await default(interaction, options)
+                        else:
+                            setattr(options, name, default)
+                    else:
+                        setattr(
+                            options,
+                            name,
+                            await option.parse(interaction, options, value),
+                        )
+                except Exception as e:
+                    return await self.on_option_error(
+                        interaction, options, e, option, value
+                    )
+            try:
+                if not await check(self, interaction, options):
+                    return
+            except Exception as e:
+                return await self.on_check_error(interaction, options, e)
+        for name, param in parameters.items():
+            if hasattr(options, name):
+                continue
+            value = arguments.get(name, MISSING)
+            try:
                 if value is MISSING:
-                    default = parameters[name].default
+                    default = param.default
                     if callable(default):
                         default = await default(interaction, options)
                     else:
@@ -145,26 +175,10 @@ class SlashCommand(ApplicationCommand):
                     setattr(
                         options,
                         name,
-                        await parameters[name].parse(interaction, options, value),
+                        await param.parse(interaction, options, value),
                     )
-            if not await check(self, interaction, options):
-                return
-        for name, param in parameters.items():
-            if hasattr(options, name):
-                continue
-            value = arguments.get(name, MISSING)
-            if value is MISSING:
-                default = param.default
-                if callable(default):
-                    default = await default(interaction, options)
-                else:
-                    setattr(options, name, default)
-            else:
-                setattr(
-                    options,
-                    name,
-                    await param.parse(interaction, options, value),
-                )
+            except Exception as e:
+                return await self.on_option_error(interaction, options, e, param, value)
         try:
             await self.callback(interaction, options)
         except Exception as e:
@@ -176,7 +190,44 @@ class SlashCommand(ApplicationCommand):
     async def on_error(
         self, interaction: Interaction, options: Options, error: Exception
     ) -> None:
-        ...
+        if isinstance(error, CheckError):
+            utils.print_exception_with_header(
+                f"Ignoring exception in check of command {self.name}:", error.error
+            )
+        if isinstance(error, OptionError):
+            e = error.error
+            if isinstance(e, ConversionError):
+                es = e.errors
+                utils.print_exception_with_header(
+                    f"Ignoring exceptions while converting option {error.option.name} of command {self.name}:",
+                    es[0],
+                )
+                for e in es[1:]:
+                    utils.print_exception(e)
+            else:
+                utils.print_exception_with_header(
+                    f"Ignoring exception while converting option {error.option.name} of command {self.name}:",
+                    error,
+                )
+        else:
+            utils.print_exception_with_header(
+                f"Ignoring exception in command {self.name}:", error
+            )
+
+    async def on_option_error(
+        self,
+        interaction: Interaction,
+        options: Options,
+        error: Exception,
+        option: Option,
+        value: Missing[Any],
+    ) -> None:
+        await self.on_error(interaction, options, OptionError(option, value, error))
+
+    async def on_check_error(
+        self, interaction: Interaction, options: Options, error: Exception
+    ) -> None:
+        await self.on_error(interaction, options, CheckError(error))
 
     @classmethod
     def to_payload(cls) -> ApplicationCommandData:
@@ -214,7 +265,7 @@ class UserCommand(ApplicationCommand):
         cls.description = description
         cls.checks = checks or []
         cls.guilds = guilds or []
-        cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
+        cls.global_ = global_ if global_ is not MISSING else not guilds
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:

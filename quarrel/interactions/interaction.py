@@ -34,7 +34,7 @@ from ..models import Member, Message, Role, User
 __all__ = ("Interaction",)
 
 if TYPE_CHECKING:
-    from typing import Union
+    from typing import Any, Dict, Union
 
     from ..missing import Missing
     from ..models import Channel, Guild
@@ -56,6 +56,7 @@ class Interaction:
         "message",
         "locale",
         "guild_locale",
+        "resolved",
         "_state",
     )
 
@@ -88,6 +89,38 @@ class Interaction:
         )
         self.locale: Missing[str] = data.get("locale", MISSING)
         self.guild_locale: Missing[str] = data.get("guild_locale", MISSING)
+        self.resolved: Dict[str, Dict[int, Any]] = {
+            "users": {},
+            "members": {},
+            "roles": {},
+            "channels": {},
+            "messages": {},
+        }
+        if self.data is not MISSING:
+            resolved = self.data.get("resolved", {})
+            if users := resolved.get("users", {}):
+                for key, value in users.items():
+                    self.resolved["users"][int(key)] = state.parse_user(value)
+            if guild is not None:
+                if members := resolved.get("members", {}):
+                    for key, value in members.items():
+                        self.resolved["members"][int(key)] = guild.parse_member(
+                            value, partial=True
+                        )
+                if roles := resolved.get("roles", {}):
+                    for key, value in roles.items():
+                        self.resolved["roles"][int(key)] = guild.parse_role(value)
+                if channels := resolved.get("channels", {}):
+                    for key, value in channels.items():
+                        self.resolved["channels"][int(key)] = guild.parse_channel(
+                            value, partial=True
+                        )
+                if messages := resolved.get("messages", {}):
+                    for key, value in messages.items():
+                        channel = guild.get_channel(int(value["channel_id"])) or MISSING
+                        self.resolved["messages"][int(key)] = state.parse_message(
+                            channel, value, partial=True
+                        )
 
     @property
     def channel(self) -> Channel:

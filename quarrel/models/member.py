@@ -32,6 +32,7 @@ from .user import User
 __all__ = ("Member",)
 
 if TYPE_CHECKING:
+    from ..missing import Missing
     from ..state import State
     from ..types.member import MemberWithUser as MemberData
     from .guild import Guild
@@ -44,10 +45,10 @@ class Member:
         self.deaf: bool = data["deaf"]
         self.mute: bool = data["mute"]
 
-        self.nickname: Optional[str] = data.get("nick", MISSING)
-        self._avatar: Optional[str] = data.get("avatar", MISSING)
-        self.premium_since: Optional[str] = data.get("premium_since", MISSING)
-        self.pending: bool = data.get("pending", MISSING)
+        self.nickname: Missing[Optional[str]] = data.get("nick", MISSING)
+        self._avatar: Missing[Optional[str]] = data.get("avatar", MISSING)
+        self.premium_since: Missing[Optional[str]] = data.get("premium_since", MISSING)
+        self.pending: Missing[bool] = data.get("pending", MISSING)
 
         # only included when in an interaction object
         # self.permissions

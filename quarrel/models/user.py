@@ -33,6 +33,7 @@ __all__ = ("User",)
 if TYPE_CHECKING:
     from typing import Optional
 
+    from ..missing import Missing
     from ..state import State
     from ..types.user import User as UserData
 
@@ -44,12 +45,12 @@ class User:
         self.discriminator: str = data["discriminator"]
         self.avatar: Optional[str] = data["avatar"]
 
-        self.bot: bool = data.get("bot", MISSING)
-        self.system: bool = data.get("system", MISSING)
-        self.banner: Optional[str] = data.get("banner", MISSING)
-        self.accent_color: Optional[int] = data.get("accent_color", MISSING)
-        self.verified: bool = data.get("verified", MISSING)
-        self.email: Optional[str] = data.get("email", MISSING)
+        self.bot: Missing[bool] = data.get("bot", MISSING)
+        self.system: Missing[bool] = data.get("system", MISSING)
+        self.banner: Missing[Optional[str]] = data.get("banner", MISSING)
+        self.accent_color: Missing[Optional[int]] = data.get("accent_color", MISSING)
+        self.verified: Missing[bool] = data.get("verified", MISSING)
+        self.email: Missing[Optional[str]] = data.get("email", MISSING)
         self.public_flags: int = data.get("public_flags", 0)
 
         self._state: State = state

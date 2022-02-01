@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, Union
 
 from .. import utils
 from ..enums import ChannelType
@@ -44,8 +44,9 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Union
+    from typing import List, Optional
 
+    from ..missing import Missing
     from ..state import State
     from ..types.channel import CategoryChannel as CategoryChannelData
     from ..types.channel import Channel as ChannelData
@@ -90,13 +91,13 @@ class TextChannel:
         self.type: ChannelType = ChannelType(data["type"])
         self.guild_id: int = int(data["guild_id"])
 
-        self.position: int = data.get("position", MISSING)
+        self.position: Missing[int] = data.get("position", MISSING)
         self.permission_overwrites: List[PermissionOverwrite] = data.get(
             "permission_overwrites", []
         )
-        self.name: str = data.get("name", MISSING)
-        self.nsfw: bool = data.get("nsfw", MISSING)
-        self.parent_id: Optional[int] = utils.get_int_or_none_or_missing(
+        self.name: Missing[str] = data.get("name", MISSING)
+        self.nsfw: Missing[bool] = data.get("nsfw", MISSING)
+        self.parent_id: Missing[Optional[int]] = utils.get_int_or_none_or_missing(
             data.get("parent_id", MISSING)
         )
 

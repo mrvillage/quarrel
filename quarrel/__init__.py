@@ -32,4 +32,5 @@ __version__ = "0.1.0a"
 from .bot import *
 from .errors import *
 from .flags import *
+from .interactions import *
 from .missing import *

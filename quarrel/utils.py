@@ -29,25 +29,29 @@ from typing import TYPE_CHECKING
 
 from .missing import MISSING
 
-__all__ = ("get_int_or_none", "get_int_or_missing", "get_int_or_none_or_missing", "get_datetime_or_missing", "get_datetime_or_none")
+__all__ = (
+    "get_int_or_none",
+    "get_int_or_missing",
+    "get_int_or_none_or_missing",
+    "get_datetime_or_missing",
+    "get_datetime_or_none",
+)
 
 if TYPE_CHECKING:
     from typing import Any, Optional
 
+    from .missing import Missing
+
 
 def get_int_or_none(value: Optional[Any]) -> Optional[int]:
-    if value is None:
-        return None
-    return int(value)
+    return None if value is None else int(value)
 
 
-def get_int_or_missing(value: Any) -> int:
-    if value is MISSING:
-        return MISSING
-    return int(value)
+def get_int_or_missing(value: Any) -> Missing[int]:
+    return MISSING if value is MISSING else int(value)
 
 
-def get_int_or_none_or_missing(value: Optional[Any]) -> Optional[int]:
+def get_int_or_none_or_missing(value: Optional[Any]) -> Missing[Optional[int]]:
     if value is MISSING:
         return MISSING
     if value is None:
@@ -55,13 +59,11 @@ def get_int_or_none_or_missing(value: Optional[Any]) -> Optional[int]:
     return int(value)
 
 
-def get_datetime_or_missing(value: Any) -> datetime.datetime:
+def get_datetime_or_missing(value: Any) -> Missing[datetime.datetime]:
     if value is MISSING:
         return MISSING
     return datetime.datetime.fromisoformat(value)
 
 
 def get_datetime_or_none(value: Optional[Any]) -> Optional[datetime.datetime]:
-    if value is None:
-        return None
-    return datetime.datetime.fromisoformat(value)
+    return None if value is None else datetime.datetime.fromisoformat(value)

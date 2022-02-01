@@ -45,9 +45,10 @@ if TYPE_CHECKING:
         Union,
     )
 
+    from ..missing import Missing
     from ..models import Member, Message, User
-    from ..types.interactions import ApplicationCommand as ApplicationCommandData
     from ..types.interactions import Option as OptionData
+    from ..types.interactions import PartialApplicationCommand as ApplicationCommandData
     from .interaction import Interaction
     from .option import Option, Options, OptionType
 
@@ -60,7 +61,7 @@ if TYPE_CHECKING:
 
 def check(
     *,
-    requires: Union[str, List[str]] = MISSING,
+    requires: Missing[Union[str, List[str]]] = MISSING,
     after_options: bool = True,
 ) -> Callable[[T], T]:
     if requires is MISSING:
@@ -84,6 +85,8 @@ class ApplicationCommand:
     type: ApplicationCommandType
     name: str
     description: str
+    guilds: List[int]
+    global_: bool
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
@@ -106,15 +109,19 @@ class SlashCommand(ApplicationCommand):
         cls,
         name: str,
         description: str,
-        options: List[OptionType] = MISSING,
+        options: Missing[List[OptionType]] = MISSING,
         parent: Optional[SlashCommand] = None,
-        checks: List[Check] = MISSING,
+        checks: Missing[List[Check]] = MISSING,
+        guilds: Missing[List[int]] = MISSING,
+        global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name
         cls.description = description
         cls.options = options or []
         cls.parent = parent
         cls.checks = checks or []
+        cls.guilds = guilds or []
+        cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
@@ -123,21 +130,41 @@ class SlashCommand(ApplicationCommand):
         parameters: Dict[str, Option] = {i.name: i for i in cls.options}  # type: ignore
         options = Options()
         for check in cls.checks:
-            requires = getattr(check, "__check_requires__", [])
-            for option in requires:
-                if hasattr(options, option):
+            requires: List[str] = getattr(check, "__check_requires__", [])
+            for name in requires:
+                if hasattr(options, name):
                     continue
-                value = arguments.get(option, MISSING)
+                value = arguments.get(name, MISSING)
                 if value is MISSING:
-                    setattr(options, option, option.default)
+                    default = parameters[name].default
+                    if callable(default):
+                        default = await default(interaction, options)
+                    else:
+                        setattr(options, name, default)
                 else:
                     setattr(
                         options,
-                        option,
-                        await parameters[option].parse(interaction, options, value),
+                        name,
+                        await parameters[name].parse(interaction, options, value),
                     )
             if not await check(self, interaction, options):
                 return
+        for name, param in parameters.items():
+            if hasattr(options, name):
+                continue
+            value = arguments.get(name, MISSING)
+            if value is MISSING:
+                default = param.default
+                if callable(default):
+                    default = await default(interaction, options)
+                else:
+                    setattr(options, name, default)
+            else:
+                setattr(
+                    options,
+                    name,
+                    await param.parse(interaction, options, value),
+                )
         try:
             await self.callback(interaction, options)
         except Exception as e:
@@ -179,11 +206,15 @@ class UserCommand(ApplicationCommand):
         cls,
         name: str,
         description: str,
-        checks: List[Check] = MISSING,
+        checks: Missing[List[Check]] = MISSING,
+        guilds: Missing[List[int]] = MISSING,
+        global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name
         cls.description = description
         cls.checks = checks or []
+        cls.guilds = guilds or []
+        cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
@@ -217,11 +248,15 @@ class MessageCommand(ApplicationCommand):
         cls,
         name: str,
         description: str,
-        checks: List[Check] = MISSING,
+        checks: Missing[List[Check]] = MISSING,
+        guilds: Missing[List[int]] = MISSING,
+        global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name
         cls.description = description
         cls.checks = checks or []
+        cls.guilds = guilds or []
+        cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:

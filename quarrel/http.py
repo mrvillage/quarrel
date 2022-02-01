@@ -27,7 +27,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import sys
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 import aiohttp
 
@@ -53,12 +53,15 @@ if TYPE_CHECKING:
         Dict,
         Mapping,
         Optional,
+        Sequence,
         Type,
         TypeVar,
         Union,
     )
 
     from .file import File
+    from .missing import Missing
+    from .types.interactions import ApplicationCommand, PartialApplicationCommand
 
     T = TypeVar("T")
     Response = Coroutine[Any, Any, T]
@@ -106,6 +109,8 @@ class Bucket:
     def delay_amount(self) -> float:
         utc = datetime.timezone.utc
         now = datetime.datetime.now(utc)
+        if self.reset_after is None and self.reset is None:
+            return 0
         return (
             self.reset_after
             or (
@@ -186,7 +191,7 @@ class Bucket:
         bucket = response.headers.get("X-RateLimit-Bucket")
         if bucket is not None:
             self.bucket = bucket
-        if not self.remaining:
+        if self.remaining == 0:
             self.delay_release()
         if response.status == 429:
             if isinstance(data, str):
@@ -209,12 +214,15 @@ class HTTP:
         self,
         session: aiohttp.ClientSession,
         token: str,
+        application_id: int,
         loop: asyncio.AbstractEventLoop,
         /,
     ) -> None:
         self.session: aiohttp.ClientSession = session
         self.token: str = token
+        self.application_id: int = application_id
         self.loop: asyncio.AbstractEventLoop = loop
+
         self.buckets: Dict[str, Bucket] = {}
         self.global_ratelimit: asyncio.Event = asyncio.Event()
         self.headers = {
@@ -226,8 +234,8 @@ class HTTP:
         self,
         method: str,
         path: str,
-        route_parameters: Mapping[str, Any] = MISSING,
-        files: Sequence[File] = MISSING,
+        route_parameters: Missing[Mapping[str, Any]] = MISSING,
+        files: Missing[Sequence[File]] = MISSING,
         **kwargs: Any,
     ) -> Any:
         route_parameters = route_parameters or {}
@@ -293,3 +301,23 @@ class HTTP:
             return f"{data['url']}?encoding={encoding}&v={v}&compress=zlib-stream"
         else:
             return f"{data['url']}?encoding={encoding}&v={v}"
+
+    def bulk_upsert_global_application_commands(
+        self, commands: Sequence[PartialApplicationCommand]
+    ) -> Response[Sequence[ApplicationCommand]]:
+        return self.request(
+            "PUT",
+            "/applications/{application_id}/commands",
+            {"application_id": self.application_id},
+            json=commands,
+        )
+
+    def bulk_upsert_guild_application_commands(
+        self, guild_id: int, commands: Sequence[PartialApplicationCommand]
+    ) -> Response[Sequence[ApplicationCommand]]:
+        return self.request(
+            "PUT",
+            "/applications/{application_id}/guilds/{guild_id}/commands",
+            {"application_id": self.application_id, "guild_id": guild_id},
+            json=commands,
+        )

@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     import datetime
     from typing import Dict, List, Optional
 
+    from ..missing import Missing
     from ..state import State
     from ..types.gateway import GuildMembersChunk
     from ..types.guild import Guild as GuildData
@@ -103,26 +104,28 @@ class Guild:
         )
         self.nsfw_level: GuildNSFWLevel = GuildNSFWLevel(data["nsfw_level"])
 
-        self.icon_hash: Optional[str] = data.get("icon_hash", MISSING)
+        self.icon_hash: Missing[Optional[str]] = data.get("icon_hash", MISSING)
         # self.owner
         # self.permissions
-        self.widget_enabled: bool = data.get("widget_enabled", MISSING)
-        self.widget_channel_id: Optional[int] = utils.get_int_or_none_or_missing(
-            data.get("widget_channel_id", MISSING)
-        )
-        self.joined_at: datetime.datetime = utils.get_datetime_or_missing(
+        self.widget_enabled: Missing[bool] = data.get("widget_enabled", MISSING)
+        self.widget_channel_id: Missing[
+            Optional[int]
+        ] = utils.get_int_or_none_or_missing(data.get("widget_channel_id", MISSING))
+        self.joined_at: Missing[datetime.datetime] = utils.get_datetime_or_missing(
             data.get("joined_at", MISSING)
         )
-        self.large: bool = data.get("large", MISSING)
-        self.unavailable: bool = data.get("unavailable", MISSING)
-        self.member_count: int = data.get("member_count", MISSING)
-        self.max_presences: Optional[int] = data.get("max_presences", MISSING)
-        self.max_members: int = data.get("max_members", MISSING)
-        self.max_video_channel_users: int = data.get("max_video_channel_users", MISSING)
-        self.approximate_member_count: int = data.get(
+        self.large: Missing[bool] = data.get("large", MISSING)
+        self.unavailable: Missing[bool] = data.get("unavailable", MISSING)
+        self.member_count: Missing[int] = data.get("member_count", MISSING)
+        self.max_presences: Missing[Optional[int]] = data.get("max_presences", MISSING)
+        self.max_members: Missing[int] = data.get("max_members", MISSING)
+        self.max_video_channel_users: Missing[int] = data.get(
+            "max_video_channel_users", MISSING
+        )
+        self.approximate_member_count: Missing[int] = data.get(
             "approximate_member_count", MISSING
         )
-        self.approximate_presence_count: int = data.get(
+        self.approximate_presence_count: Missing[int] = data.get(
             "approximate_presence_count", MISSING
         )
         # self.welcome_screen

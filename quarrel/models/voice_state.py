@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     import datetime
     from typing import Optional
 
+    from ..missing import Missing
     from ..state import State
     from ..types.voice_state import VoiceState as VoiceStateData
 
@@ -54,6 +55,8 @@ class VoiceState:
             datetime.datetime
         ] = utils.get_datetime_or_none(data["request_to_speak_timestamp"])
 
-        self.guild_id: int = utils.get_int_or_missing(data.get("guild_id", MISSING))
-        self.self_stream: bool = data.get("self_stream", MISSING)
+        self.guild_id: Missing[int] = utils.get_int_or_missing(
+            data.get("guild_id", MISSING)
+        )
+        self.self_stream: Missing[bool] = data.get("self_stream", MISSING)
         self._state: State = state

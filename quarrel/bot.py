@@ -25,11 +25,11 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 import aiohttp
 
-from .enums import ApplicationCommandType, InteractionType
+from .enums import InteractionType
 from .events import EventHandler
 from .gateway import Gateway, GatewayHandler
 from .http import HTTP
@@ -39,10 +39,11 @@ from .state import State
 __all__ = ("Bot",)
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Coroutine, Dict, Optional, Set, Tuple
+    from typing import Any, Callable, Coroutine, Dict, List, Optional, Set
 
     from .flags import Intents
     from .interactions import ApplicationCommand, Interaction
+    from .missing import Missing
     from .models import User
     from .types.interactions import ApplicationCommandInteractionData
 
@@ -52,19 +53,27 @@ if TYPE_CHECKING:
 class Bot:
     def __init__(
         self,
+        application_id: int,
         token: str,
         intents: Intents,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
+        self._application_id: int = application_id
         self._token: str = token
         self.intents: Intents = intents
+
         self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
         self._session: aiohttp.ClientSession = aiohttp.ClientSession()
-        self._http: HTTP = HTTP(self._session, token, self._loop)
+        self._http: HTTP = HTTP(self._session, token, self._application_id, self._loop)
         self.listeners: Dict[str, Set[CoroutineFunction]] = {}
         self._state: State = State(self)
-        self.user: User = MISSING
-        self.commands: Dict[Tuple[str, ApplicationCommandType], ApplicationCommand] = {}
+        self.user: Missing[User] = MISSING
+        self.commands: Set[Type[ApplicationCommand]] = set()
+        self.registered_commands: Dict[int, Type[ApplicationCommand]] = {}
+
+    @property
+    def application_id(self) -> int:
+        return self._application_id
 
     @property
     def token(self) -> str:
@@ -103,7 +112,7 @@ class Bot:
             await self.event_handler.handle(message["t"], message["d"])
 
     async def run(self):
-        await self.upload_application_commands()
+        await self.register_application_commands()
         await self.connect()
 
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
@@ -112,8 +121,7 @@ class Bot:
             self.loop.create_task(coro(*args, **kwargs))
         except AttributeError:
             pass
-        listeners = self.listeners.get(event)
-        if listeners:
+        if listeners := self.listeners.get(event):
             for listener in listeners:
                 self.loop.create_task(self._dispatch(event, listener, *args, **kwargs))
 
@@ -126,18 +134,17 @@ class Bot:
             self.dispatch("event_error", event, e, *args, **kwargs)
 
     def listener(
-        self, name: str = MISSING
+        self, name: Missing[str] = MISSING
     ) -> Callable[[CoroutineFunction], CoroutineFunction]:
         def decorator(coro: CoroutineFunction) -> CoroutineFunction:
             if not asyncio.iscoroutinefunction(coro):
                 raise TypeError("Decorated function must be a coroutine function")
-            if name is MISSING and not coro.__name__.startswith("on_"):
+            if not name and not coro.__name__.startswith("on_"):
                 raise ValueError(
                     "Decorated function must have a name starting with 'on_'"
                 )
             event = name or coro.__name__[3:]
-            listeners = self.listeners.get(event)
-            if listeners:
+            if listeners := self.listeners.get(event):
                 listeners.add(coro)
             else:
                 self.listeners[event] = {coro}
@@ -153,15 +160,39 @@ class Bot:
         setattr(self, coro.__name__, coro)
         return coro
 
-    def command(self, command: ApplicationCommand) -> ApplicationCommand:
+    def command(self, command: Type[ApplicationCommand]) -> Type[ApplicationCommand]:
         return self.add_command(command)
 
-    def add_command(self, command: ApplicationCommand) -> ApplicationCommand:
-        self.commands[(command.name, command.type)] = command
+    def add_command(
+        self, command: Type[ApplicationCommand]
+    ) -> Type[ApplicationCommand]:
+        self.commands.add(command)
         return command
 
-    async def upload_application_commands(self) -> None:
-        global_commands = [i.to_payload() for i in self.commands.values()]
+    async def register_application_commands(self) -> None:
+        commands = {i.name: i for i in self.commands if i.global_}
+        if commands:
+            registered = await self.http.bulk_upsert_global_application_commands(
+                [i.to_payload() for i in commands.values()]
+            )
+            for command in registered:
+                self.registered_commands[int(command["id"])] = commands[command["name"]]
+        guild_commands: Dict[int, List[Type[ApplicationCommand]]] = {}
+        for command in self.commands:
+            for guild in command.guilds:
+                if (commands_ := guild_commands.get(guild)) is None:
+                    guild_commands[guild] = [command]
+                else:
+                    commands_.append(command)
+        commands = {(j, i.name): i for i in self.commands for j in i.guilds}
+        for guild, commands_ in guild_commands.items():
+            registered = await self.http.bulk_upsert_guild_application_commands(
+                guild, [i.to_payload() for i in commands_]
+            )
+            for command in registered:
+                self.registered_commands[int(command["id"])] = commands[
+                    (int(command.get("guild_id", 0)), command["name"])
+                ]
 
     async def on_ready(self) -> None:
         ...
@@ -172,9 +203,7 @@ class Bot:
     async def process_interaction(self, interaction: Interaction) -> None:
         if interaction.type is InteractionType.APPLICATION_COMMAND:
             data: ApplicationCommandInteractionData = interaction.data  # type: ignore
-            command = self.commands.get(
-                (data["name"], ApplicationCommandType(data["type"]))
-            )
+            command = self.registered_commands.get(int(data["id"]))
             if command is not None:
                 await command.run_command(interaction)
         elif interaction.type is InteractionType.MESSAGE_COMPONENT:

@@ -36,6 +36,7 @@ __all__ = ("Interaction",)
 if TYPE_CHECKING:
     from typing import Union
 
+    from ..missing import Missing
     from ..models import Channel, Guild
     from ..state import State
     from ..types.interactions import Interaction as InteractionData
@@ -64,24 +65,29 @@ class Interaction:
         self.type: InteractionType = InteractionType(data["type"])
         self.token: str = data["token"]
 
-        self.data: InteractionDataData = data.get("data", MISSING)
-        self.guild_id: int = utils.get_int_or_missing(data.get("guild_id", MISSING))
-        self.channel_id: int = utils.get_int_or_missing(data.get("channel_id", MISSING))
+        self.data: Missing[InteractionDataData] = data.get("data", MISSING)
+        self.guild_id: Missing[int] = utils.get_int_or_missing(
+            data.get("guild_id", MISSING)
+        )
+        self.channel_id: Missing[int] = utils.get_int_or_missing(
+            data.get("channel_id", MISSING)
+        )
         message = data.get("message", MISSING)
         member = data.get("member", MISSING)
+        self._state: State = state
         guild = self.guild
         if member is not MISSING and guild is not None:
             member = Member(member, guild, state)
             self.user: Union[Member, User] = member
         else:
-            user = User(data.get("user", MISSING), state)
+            # there will always be a member or user included
+            user = User(data["user"], state)  # type: ignore
             self.user: Union[Member, User] = user
-        self.message: Message = (
+        self.message: Missing[Message] = (
             Message(message, self.channel, state) if message is not MISSING else MISSING
         )
-        self.locale: str = data.get("locale", MISSING)
-        self.guild_locale: str = data.get("guild_locale", MISSING)
-        self._state: State = state
+        self.locale: Missing[str] = data.get("locale", MISSING)
+        self.guild_locale: Missing[str] = data.get("guild_locale", MISSING)
 
     @property
     def channel(self) -> Channel:
@@ -89,6 +95,8 @@ class Interaction:
 
     @property
     def guild(self) -> Optional[Guild]:
+        if self.guild_id is MISSING:
+            return None
         return self._state.get_guild(self.guild_id)
 
     def get_user_from_resolved(self, id: int) -> User:

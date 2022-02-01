@@ -34,6 +34,7 @@ __all__ = ("Emoji",)
 if TYPE_CHECKING:
     from typing import Optional
 
+    from ..missing import Missing
     from ..state import State
     from ..types.emoji import Emoji as EmojiData
     from .guild import Guild
@@ -51,16 +52,16 @@ class Emoji:
             for i in data.get("roles", [])
             if (r := guild.get_role(int(i))) is not None
         ]
-        self.user: User = (
+        self.user: Missing[User] = (
             u
             if (ud := data.get("user", MISSING)) is not MISSING
             and (u := state.get_user(int(ud["id"]))) is not None
             else MISSING
         )
-        self.require_colons: bool = data.get("require_colons", MISSING)
-        self.managed: bool = data.get("managed", MISSING)
-        self.animated: bool = data.get("animated", MISSING)
-        self.available: bool = data.get("available", MISSING)
+        self.require_colons: Missing[bool] = data.get("require_colons", MISSING)
+        self.managed: Missing[bool] = data.get("managed", MISSING)
+        self.animated: Missing[bool] = data.get("animated", MISSING)
+        self.available: Missing[bool] = data.get("available", MISSING)
 
         self.guild: Guild = guild
         self._state: State = state

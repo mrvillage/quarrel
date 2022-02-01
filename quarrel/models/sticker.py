@@ -33,6 +33,7 @@ from ..missing import MISSING
 __all__ = ("Sticker",)
 
 if TYPE_CHECKING:
+    from ..missing import Missing
     from ..state import State
     from ..types.sticker import Sticker as StickerData
     from .guild import Guild
@@ -47,11 +48,11 @@ class Sticker:
         self.type: StickerType = StickerType(data["type"])
         self.format_type: StickerFormat = StickerFormat(data["format_type"])
 
-        self.pack_id: int = utils.get_int_or_missing(data.get("pack_id", MISSING))
-        self.available: bool = data.get("available", MISSING)
-        self.guild_id: int = utils.get_int_or_missing(data.get("guild_id", MISSING))
+        self.pack_id: Missing[int] = utils.get_int_or_missing(data.get("pack_id", MISSING))
+        self.available: Missing[bool] = data.get("available", MISSING)
+        self.guild_id: Missing[int] = utils.get_int_or_missing(data.get("guild_id", MISSING))
         # self.user
-        self.sort_value: int = data.get("sort_value", MISSING)
+        self.sort_value: Missing[int] = data.get("sort_value", MISSING)
 
         self.guild: Guild = guild
         self._state: State = state

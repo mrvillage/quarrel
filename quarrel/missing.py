@@ -24,23 +24,23 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from enum import Enum
+from typing import Literal, TypeVar, Union
 
-__all__ = ("MISSING",)
+__all__ = ("MISSING", "Missing")
 
-if TYPE_CHECKING:
-    from typing import Any, Final
+T = TypeVar("T")
 
 
-class _MissingSentinel:
-    def __bool__(self) -> bool:
-        return False
+class _MISSING(Enum):
+    MISSING = "MISSING"
 
-    def __eq__(self, other: Any) -> bool:
+    def __bool__(self) -> Literal[False]:
         return False
 
     def __repr__(self) -> str:
-        return "..."
+        return "MISSING"
 
 
-MISSING: Final[Any] = _MissingSentinel()
+MISSING = _MISSING.MISSING
+Missing = Union[_MISSING, T]

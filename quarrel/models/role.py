@@ -31,6 +31,7 @@ from ..missing import MISSING
 __all__ = ("Role",)
 
 if TYPE_CHECKING:
+    from ..missing import Missing
     from ..state import State
     from ..types.role import Role as RoleData
     from ..types.role import RoleTags
@@ -48,9 +49,9 @@ class Role:
         self.managed: bool = data["managed"]
         self.mentionable: bool = data["mentionable"]
 
-        self._icon: Optional[str] = data.get("icon", MISSING)
-        self._unicode_emoji: Optional[str] = data.get("unicode_emoji", MISSING)
-        self._tags: RoleTags = data.get("tags", MISSING)
+        self._icon: Missing[Optional[str]] = data.get("icon", MISSING)
+        self._unicode_emoji: Missing[Optional[str]] = data.get("unicode_emoji", MISSING)
+        self._tags: Missing[RoleTags] = data.get("tags", MISSING)
 
         self.guild: Guild = guild
         self._state: State = state

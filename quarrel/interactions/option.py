@@ -30,13 +30,24 @@ from ..enums import ApplicationCommandOptionType
 from ..errors import ConverterError
 from ..missing import MISSING
 
-__all__ = ("Option",)
+__all__ = ("Option", "Options")
 
 if TYPE_CHECKING:
-    from enum import Enum
-    from typing import Any, Callable, Coroutine, List, Sequence, Type, TypeVar, Union
+    from enum import Enum, EnumMeta
+    from typing import (
+        Any,
+        Callable,
+        Coroutine,
+        List,
+        Sequence,
+        Type,
+        TypeVar,
+        Union,
+        cast,
+    )
 
     from ..enums import ChannelType
+    from ..missing import Missing
     from ..types.interactions import Option as OptionData
     from .command import SlashCommand
     from .interaction import Interaction
@@ -65,14 +76,14 @@ class Option:
         type: ApplicationCommandOptionType,
         name: str,
         description: str,
-        converter: Converter = MISSING,
-        converters: List[Converter] = MISSING,
+        converter: Missing[Converter] = MISSING,
+        converters: Missing[List[Converter]] = MISSING,
         default: Any = MISSING,
-        choices: Type[Enum] = MISSING,
-        channel_types: Sequence[ChannelType] = MISSING,
-        min_value: float = MISSING,
-        max_value: float = MISSING,
-        autocomplete: bool = MISSING,
+        choices: Missing[EnumMeta] = MISSING,
+        channel_types: Missing[Sequence[ChannelType]] = MISSING,
+        min_value: Missing[float] = MISSING,
+        max_value: Missing[float] = MISSING,
+        autocomplete: Missing[bool] = MISSING,
     ):
         self.type: ApplicationCommandOptionType = type
         self.name: str = name
@@ -90,11 +101,11 @@ class Option:
         ) or []
 
         self.default: Any = default
-        self.choices: Type[Enum] = choices
-        self.channel_types: Sequence[ChannelType] = channel_types
-        self.min_value: float = min_value
-        self.max_value: float = max_value
-        self.autocomplete: bool = autocomplete
+        self.choices: Missing[EnumMeta] = choices
+        self.channel_types: Missing[Sequence[ChannelType]] = channel_types
+        self.min_value: Missing[float] = min_value
+        self.max_value: Missing[float] = max_value
+        self.autocomplete: Missing[bool] = autocomplete
 
     async def autocomplete_callback(
         self, interaction: Interaction, options: Options
@@ -110,6 +121,8 @@ class Option:
         if self.default is not MISSING:
             payload["required"] = True
         if self.choices is not MISSING:
+            if TYPE_CHECKING:
+                self.choices = cast(Type[Enum], self.choices)
             payload["choices"] = [
                 {"name": i.name, "value": i.value} for i in self.choices
             ]

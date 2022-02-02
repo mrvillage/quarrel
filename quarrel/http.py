@@ -70,6 +70,7 @@ if TYPE_CHECKING:
 class Bucket:
     __slots__ = (
         "http",
+        "route_key",
         "key",
         "release_immediately",
         "lock",
@@ -80,8 +81,9 @@ class Bucket:
         "bucket",
     )
 
-    def __init__(self, http: HTTP, key: str, /) -> None:
+    def __init__(self, http: HTTP, route_key: str, key: str, /) -> None:
         self.http: HTTP = http
+        self.route_key: str = route_key
         self.key: str = key
         self.release_immediately: bool = True
         self.lock: asyncio.Lock = asyncio.Lock()
@@ -141,19 +143,19 @@ class Bucket:
 
     @staticmethod
     def bucket_key(
-        path: str,
+        bucket: Optional[str],
         channel_id: Optional[int] = None,
         guild_id: Optional[int] = None,
         webhook_id: Optional[int] = None,
         webhook_token: Optional[str] = None,
     ) -> str:
-        return f"{path}/{channel_id}/{guild_id}/{webhook_id}/{webhook_token}"
+        return f"{bucket}/{channel_id}/{guild_id}/{webhook_id}/{webhook_token}"
 
     @classmethod
     def from_major_parameters(
         cls,
         http: HTTP,
-        path: str,
+        route_key: str,
         /,
         channel_id: Optional[int] = None,
         guild_id: Optional[int] = None,
@@ -161,17 +163,17 @@ class Bucket:
         webhook_token: Optional[str] = None,
     ) -> Bucket:
         key = cls.bucket_key(
-            path,
+            http.route_buckets.get(route_key),
             channel_id=channel_id,
             guild_id=guild_id,
             webhook_id=webhook_id,
             webhook_token=webhook_token,
         )
-        bucket = http.buckets.get(key)
-        if bucket is None:
-            bucket = cls(http, key)
-            http.buckets[key] = bucket
-        return bucket
+        bucket_ = http.buckets.get(key)
+        if bucket_ is None:
+            bucket_ = cls(http, route_key, key)
+            http.buckets[key] = bucket_
+        return bucket_
 
     async def handle_ratelimit(
         self, response: aiohttp.ClientResponse, data: Union[str, Dict[str, Any]], /
@@ -191,6 +193,7 @@ class Bucket:
         bucket = response.headers.get("X-RateLimit-Bucket")
         if bucket is not None:
             self.bucket = bucket
+            self.http.route_buckets[self.route_key] = bucket
         if self.remaining == 0:
             self.delay_release()
         if response.status == 429:
@@ -229,6 +232,7 @@ class HTTP:
             "User-Agent": self.USER_AGENT,
             "Authorization": f"Bot {self.token}",
         }
+        self.route_buckets: Dict[str, str] = {}
 
     async def request(
         self,
@@ -253,7 +257,7 @@ class HTTP:
         url = f"{self.BASE_URL}{path.format_map(route_parameters)}"
         async with Bucket.from_major_parameters(
             self,
-            path,
+            method + path,
             channel_id=route_parameters.get("channel_id"),
             guild_id=route_parameters.get("guild_id"),
             webhook_id=route_parameters.get("webhook_id"),

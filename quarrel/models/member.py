@@ -42,6 +42,20 @@ if TYPE_CHECKING:
 
 
 class Member:
+    __slots__ = (
+        "guild",
+        "_state",
+        "id",
+        "joined_at",
+        "deaf",
+        "mute",
+        "nickname",
+        "_avatar",
+        "premium_since",
+        "pending",
+        "user",
+    )
+
     def __init__(
         self,
         data: Union[MemberData, MemberWithUser],

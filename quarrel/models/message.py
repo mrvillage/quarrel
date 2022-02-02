@@ -36,6 +36,8 @@ if TYPE_CHECKING:
 
 
 class Message:
+    __slots__ = ("channel", "_state", "id")
+
     def __init__(
         self, data: MessageData, channel: Missing[Channel], state: State
     ) -> None:

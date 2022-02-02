@@ -43,6 +43,19 @@ if TYPE_CHECKING:
 
 
 class Emoji:
+    __slots__ = (
+        "guild",
+        "_state",
+        "id",
+        "name",
+        "roles",
+        "user",
+        "require_colons",
+        "managed",
+        "animated",
+        "available",
+    )
+
     def __init__(self, data: EmojiData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
         self._state: State = state

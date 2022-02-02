@@ -84,17 +84,29 @@ class RootChannel(Generic[T]):
 
 
 class TextChannel:
+    __slots__ = (
+        "guild",
+        "_state",
+        "id" "type",
+        "guild_id",
+        "position",
+        "permission_overwrites",
+        "name",
+        "nsfw",
+        "parent_id",
+    )
+
     def __init__(
         self, data: Union[TextChannelData, NewsChannelData], guild: Guild, state: State
     ) -> None:
         self.guild: Guild = guild
         self._state: State = state
+        self.id: int = int(data["id"])
         self.update(data)
 
     def update(
         self, data: Union[TextChannelData, NewsChannelData], /, *, partial: bool = False
     ) -> TextChannel:
-        self.id: int = int(data["id"])
         self.type: ChannelType = ChannelType(data["type"])
         self.guild_id: int = int(data["guild_id"])
 
@@ -111,6 +123,8 @@ class TextChannel:
 
 
 class DMChannel:
+    __slots__ = ("_state", "id")
+
     def __init__(self, data: DMChannelData, state: State) -> None:
         self._state: State = state
         self.id: int = int(data["id"])
@@ -121,6 +135,8 @@ class DMChannel:
 
 
 class VoiceChannel:
+    __slots__ = ("guild", "_state", "id")
+
     def __init__(self, data: VoiceChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
         self._state: State = state
@@ -134,6 +150,8 @@ class VoiceChannel:
 
 
 class CategoryChannel:
+    __slots__ = ("guild", "_state", "id")
+
     def __init__(self, data: CategoryChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
         self._state: State = state
@@ -147,6 +165,8 @@ class CategoryChannel:
 
 
 class StoreChannel:
+    __slots__ = ("guild", "_state", "id")
+
     def __init__(self, data: StoreChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
         self._state: State = state
@@ -160,6 +180,8 @@ class StoreChannel:
 
 
 class Thread:
+    __slots__ = ("guild", "_state", "id")
+
     def __init__(self, data: ThreadData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
         self._state: State = state
@@ -171,6 +193,8 @@ class Thread:
 
 
 class StageChannel:
+    __slots__ = ("guild", "_state", "id")
+
     def __init__(self, data: StageChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
         self._state: State = state

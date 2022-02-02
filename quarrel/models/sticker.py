@@ -40,6 +40,21 @@ if TYPE_CHECKING:
 
 
 class Sticker:
+    __slots__ = (
+        "guild",
+        "_state",
+        "id",
+        "name",
+        "description",
+        "tags",
+        "type",
+        "format_type",
+        "pack_id",
+        "available",
+        "guild_id",
+        "sort_value",
+    )
+
     def __init__(self, data: StickerData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
         self._state: State = state

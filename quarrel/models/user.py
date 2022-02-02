@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 
 
 class User:
+    __slots__ = ("_state", "id", "username", "discriminator", "_avatar", "bot", "system", "banner", "accent_color", "verified", "email", "public_flags")
     def __init__(self, data: UserData, state: State) -> None:
         self._state: State = state
         self.id: int = int(data["id"])
@@ -47,7 +48,7 @@ class User:
     def update(self, data: UserData) -> User:
         self.username: str = data["username"]
         self.discriminator: str = data["discriminator"]
-        self.avatar: Optional[str] = data["avatar"]
+        self._avatar: Optional[str] = data["avatar"]
 
         self.bot: Missing[bool] = data.get("bot", MISSING)
         self.system: Missing[bool] = data.get("system", MISSING)

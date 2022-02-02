@@ -63,6 +63,55 @@ if TYPE_CHECKING:
 
 
 class Guild:
+    __slots__ = (
+        "_state",
+        "id",
+        "name",
+        "_icon",
+        "_splash",
+        "_discovery_splash",
+        "owner_id",
+        "afk_channel_id",
+        "afk_timeout",
+        "verification_level",
+        "default_message_notifications",
+        "explicit_content_filter",
+        "features",
+        "mfa_level",
+        "application_id",
+        "system_channel_id",
+        "system_channel_flags",
+        "rules_channel_id",
+        "vanity_url_code",
+        "description",
+        "_banner",
+        "premium_tier",
+        "premium_subscription_count",
+        "preferred_locale",
+        "public_updates_channel_id",
+        "nsfw_level",
+        "icon_hash",
+        "widget_enabled",
+        "widget_channel_id",
+        "joined_at",
+        "large",
+        "unavailable",
+        "member_count",
+        "max_presences",
+        "max_members",
+        "max_video_channel_users",
+        "approximate_member_count",
+        "approximate_presence_count",
+        "premium_progress_bar_enabled",
+        "_roles",
+        "_emojis",
+        "_voice_states",
+        "_members",
+        "_channels",
+        "_stickers",
+        "_chunk_event",
+    )
+
     def __init__(self, data: GuildData, state: State) -> None:
         self._state: State = state
         self.id: int = int(data["id"])
@@ -146,7 +195,7 @@ class Guild:
         voice_states = [
             VoiceState(i, self._state) for i in data.get("voice_states", [])
         ]
-        self.voice_states: Dict[int, VoiceState] = {v.user_id: v for v in voice_states}
+        self._voice_states: Dict[int, VoiceState] = {v.user_id: v for v in voice_states}
         members = [Member(i, self, self._state) for i in data.get("members", [])]
         self._members: Dict[int, Member] = {m.id: m for m in members}
         channels = [
@@ -157,7 +206,7 @@ class Guild:
         # self.presences
         # self.stage_instances
         stickers = [Sticker(i, self, self._state) for i in data.get("stickers", [])]
-        self.stickers: Dict[int, Sticker] = {s.id: s for s in stickers}
+        self._stickers: Dict[int, Sticker] = {s.id: s for s in stickers}
         # self.guild_scheduled_events
         return self
 

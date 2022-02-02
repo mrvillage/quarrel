@@ -39,6 +39,22 @@ if TYPE_CHECKING:
 
 
 class Role:
+    __slots__ = (
+        "guild",
+        "_state",
+        "id",
+        "name",
+        "_color",
+        "hoist",
+        "position",
+        "_permissions",
+        "managed",
+        "mentionable",
+        "_icon",
+        "_unicode_emoji",
+        "_tags",
+    )
+
     def __init__(self, data: RoleData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
         self._state: State = state

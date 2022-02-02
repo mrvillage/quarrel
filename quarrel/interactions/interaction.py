@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 
 class Interaction:
     __slots__ = (
+        "_state",
         "id",
         "application_id",
         "type",
@@ -58,7 +59,6 @@ class Interaction:
         "guild_locale",
         "resolved",
         "target_id",
-        "_state",
     )
 
     def __init__(self, data: InteractionData, state: State) -> None:

@@ -41,11 +41,27 @@ if TYPE_CHECKING:
 
 
 class VoiceState:
+    __slots__ = (
+        "_state",
+        "channel_id",
+        "user_id",
+        "session_id",
+        "deaf",
+        "mute",
+        "self_deaf",
+        "self_mute",
+        "self_video",
+        "suppress",
+        "request_to_speak_timestamp",
+        "guild_id",
+        "self_stream",
+    )
+
     def __init__(self, data: VoiceStateData, state: State) -> None:
         self._state: State = state
         self.update(data)
 
-    def update(self, data:VoiceStateData) -> VoiceState:
+    def update(self, data: VoiceStateData) -> VoiceState:
         self.channel_id: Optional[int] = utils.get_int_or_none(data["channel_id"])
         self.user_id: int = int(data["user_id"])
         self.session_id: str = data["session_id"]

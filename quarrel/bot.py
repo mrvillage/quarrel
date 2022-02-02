@@ -85,7 +85,7 @@ class Bot:
 
     @property
     def gateway(self) -> Gateway:
-        return self._gateway
+        return self.gateway_handler.gateway
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
@@ -100,13 +100,7 @@ class Bot:
         return self._state
 
     async def connect(self):
-        gateway_url = await self.http.get_gateway_bot()
-        self._gateway = await Gateway.connect(
-            self._session, gateway_url, self.http.USER_AGENT
-        )
-        self.gateway_handler = GatewayHandler(self, self.loop)
-        await self.gateway_handler.handle_message(await self.gateway_handler.receive())
-        await self.gateway_handler.identify()
+        self.gateway_handler = await GatewayHandler.connect(self)
         self.event_handler = EventHandler(self, self.loop)
         async for message in self.gateway_handler:
             await self.event_handler.handle(message["t"], message["d"])

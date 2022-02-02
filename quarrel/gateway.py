@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING
 
 import aiohttp
 
+from .errors import InvalidSessionError
 from .missing import MISSING
 
 __all__ = ("GatewayHandler",)
@@ -58,6 +59,10 @@ class GatewayClosure(Exception):
     ...
 
 
+class UnknownGatewayMessageType(Exception):
+    ...
+
+
 class Heartbeat:
     def __init__(self, handler: GatewayHandler, interval: float):
         self.handler: GatewayHandler = handler
@@ -68,8 +73,8 @@ class Heartbeat:
 
     async def send(self) -> None:
         if not self.handler.acked:
-            # stop and resume
-            ...
+            self.stop()
+            await self.handler.close_and_resume()
         await self.handler.gateway.socket.send_json(
             {"op": 1, "d": self.handler.sequence}
         )
@@ -151,8 +156,7 @@ class Gateway:
                 raise GatewayClosure(message)
             elif message.type in {aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.BINARY}:  # type: ignore
                 return self.parse_gateway_message(message.data)  # type: ignore
-            else:
-                raise msg.data  # type: ignore
+            raise UnknownGatewayMessageType(message)
         except (asyncio.TimeoutError, GatewayClosure):
             raise
 
@@ -180,6 +184,8 @@ class GatewayHandler:
     def __init__(
         self,
         bot: Bot,
+        gateway_url: str,
+        gateway: Gateway,
         loop: asyncio.AbstractEventLoop,
         /,
         *,
@@ -188,7 +194,8 @@ class GatewayHandler:
         sequence: Optional[int] = None,
     ):
         self.bot: Bot = bot
-        self.gateway: Gateway = bot.gateway
+        self.gateway_url: str = gateway_url
+        self.gateway: Gateway = gateway
         self.loop: asyncio.AbstractEventLoop = loop
         self.shard_id: Optional[int] = shard_id
         self.shard_count: Optional[int] = shard_count
@@ -213,11 +220,20 @@ class GatewayHandler:
             if result is not None:
                 return result
 
+    @classmethod
+    async def connect(cls, bot: Bot) -> GatewayHandler:
+        gateway_url = await bot.http.get_gateway_bot()
+        gateway = await Gateway.connect(bot.session, gateway_url, bot.http.USER_AGENT)
+        gateway_handler = cls(bot, gateway_url, gateway, bot.loop)
+        await gateway_handler.handle_message(await gateway_handler.receive())
+        await gateway_handler.identify()
+        return gateway_handler
+
     async def handle_message(
         self, message: GatewayDispatch
     ) -> Optional[GatewayDispatch]:
-        op = message.get("op")
-        data = message.get("d", {})
+        op = message["op"]
+        data = message["d"]
         sequence = message.get("s")
 
         if sequence is not None:
@@ -239,7 +255,7 @@ class GatewayHandler:
 
         # Invalid Session
         if op == 9:
-            return await self.handle_invalid_session(data)
+            return await self.handle_invalid_session(data)  # type: ignore
 
         # Hello
         if op == 10:
@@ -255,10 +271,13 @@ class GatewayHandler:
         await self.heartbeat.send()
 
     async def handle_reconnect(self, data: Dict[str, Any]) -> None:
-        ...
+        await self.close_and_resume()
 
-    async def handle_invalid_session(self, data: Dict[str, Any]) -> None:
-        ...
+    async def handle_invalid_session(self, data: bool) -> None:
+        if data:
+            await self.close_and_resume()
+        else:
+            raise InvalidSessionError
 
     async def handle_hello(self, data: Dict[str, Any]) -> None:
         self.heartbeat_interval: float = data["heartbeat_interval"] / 1000
@@ -328,3 +347,10 @@ class GatewayHandler:
             data["query"] = ""
 
         await self.send(8, data)
+
+    async def close_and_resume(self) -> None:
+        await self.gateway.close(1002)
+        self.gateway = await Gateway.connect(
+            self.bot.session, self.gateway_url, self.bot.http.USER_AGENT
+        )
+        await self.resume()

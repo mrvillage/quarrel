@@ -32,20 +32,30 @@ from .user import User
 __all__ = ("Member",)
 
 if TYPE_CHECKING:
+    from typing import Union
+
     from ..missing import Missing
     from ..state import State
-    from ..types.member import MemberWithUser as MemberData
+    from ..types.member import Member as MemberData
+    from ..types.member import MemberWithUser as MemberWithUser
     from .guild import Guild
 
 
 class Member:
-    def __init__(self, data: MemberData, guild: Guild, state: State) -> None:
+    def __init__(
+        self,
+        data: Union[MemberData, MemberWithUser],
+        guild: Guild,
+        state: State,
+        id: int = 0,
+    ) -> None:
         self.guild: Guild = guild
         self._state: State = state
-        self.id: int = int(data["user"]["id"])
+        self.id = user_id if (user_id := int(data.get("user", {"id": 0})["id"])) else id
+
         self.update(data)
 
-    def update(self, data: MemberData) -> Member:
+    def update(self, data: Union[MemberData, MemberWithUser]) -> Member:
         self.joined_at: str = data["joined_at"]
         self.deaf: bool = data["deaf"]
         self.mute: bool = data["mute"]
@@ -58,5 +68,8 @@ class Member:
         # only included when in an interaction object
         # self.permissions
 
-        self.user: User = self._state.parse_user(data["user"])
+        if (user := data.get("user", MISSING)) is not MISSING:
+            self.user: Missing[User] = self._state.parse_user(user)
+        else:
+            self.user: Missing[User] = MISSING
         return self

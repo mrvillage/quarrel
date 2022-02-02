@@ -270,6 +270,11 @@ class UserCommand(ApplicationCommand):
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
         instance = cls()
+        # for performance, just using type: ignore instead
+        # of checks since the Member or User will be present
+        user = interaction.get_member_from_resolved(interaction.target_id)  # type: ignore
+        if user is None:
+            user: User = interaction.get_user_from_resolved(interaction.target_id)  # type: ignore
         try:
             await instance.callback(interaction, user)
         except Exception as e:
@@ -312,6 +317,9 @@ class MessageCommand(ApplicationCommand):
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
         instance = cls()
+        # for performance, just using type: ignore instead
+        # of checks since the Message will be present
+        message: Message = interaction.get_message_from_resolved(interaction.target_id)  # type: ignore
         try:
             await instance.callback(interaction, message)
         except Exception as e:

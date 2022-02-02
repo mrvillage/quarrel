@@ -28,7 +28,7 @@ from typing import Dict, List, TypedDict, Union
 
 from discord import Emoji
 
-from .channel import Channel
+from .channel import GuildChannel
 from .member import Member, MemberWithUser
 from .message import Message
 from .role import Role
@@ -50,7 +50,7 @@ class _InteractionDataResolvedOptional(TypedDict, total=False):
     users: Dict[Snowflake, User]
     members: Dict[Snowflake, Member]
     roles: Dict[Snowflake, Role]
-    channels: Dict[Snowflake, Channel]
+    channels: Dict[Snowflake, GuildChannel]
     messages: Dict[Snowflake, Message]
 
 

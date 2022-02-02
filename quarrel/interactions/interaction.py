@@ -57,10 +57,12 @@ class Interaction:
         "locale",
         "guild_locale",
         "resolved",
+        "target_id",
         "_state",
     )
 
     def __init__(self, data: InteractionData, state: State) -> None:
+        self._state: State = state
         self.id: int = int(data["id"])
         self.application_id: int = int(data["application_id"])
         self.type: InteractionType = InteractionType(data["type"])
@@ -75,7 +77,6 @@ class Interaction:
         )
         message = data.get("message", MISSING)
         member = data.get("member", MISSING)
-        self._state: State = state
         guild = self.guild
         if member is not MISSING and guild is not None:
             member = Member(member, guild, state)
@@ -104,6 +105,7 @@ class Interaction:
             if guild is not None:
                 if members := resolved.get("members", {}):
                     for key, value in members.items():
+                        value["user"] = users[key]
                         self.resolved["members"][int(key)] = guild.parse_member(
                             value, partial=True
                         )
@@ -121,6 +123,9 @@ class Interaction:
                         self.resolved["messages"][int(key)] = state.parse_message(
                             channel, value, partial=True
                         )
+            self.target_id: Missing[int] = utils.get_int_or_missing(
+                self.data.get("target_id", MISSING)
+            )
 
     @property
     def channel(self) -> Channel:
@@ -132,17 +137,17 @@ class Interaction:
             return None
         return self._state.get_guild(self.guild_id)
 
-    def get_user_from_resolved(self, id: int) -> User:
-        ...
+    def get_user_from_resolved(self, id: int) -> Optional[User]:
+        return self.resolved["users"].get(id)
 
-    def get_member_from_resolved(self, id: int) -> Member:
-        ...
+    def get_member_from_resolved(self, id: int) -> Optional[Member]:
+        return self.resolved["members"].get(id)
 
-    def get_role_from_resolver(self, id: int) -> Role:
-        ...
+    def get_role_from_resolver(self, id: int) -> Optional[Role]:
+        return self.resolved["roles"].get(id)
 
-    def get_channel_from_resolved(self, id: int) -> Channel:
-        ...
+    def get_channel_from_resolved(self, id: int) -> Optional[Channel]:
+        return self.resolved["channels"].get(id)
 
-    def get_message_from_resolved(self, id: int) -> Message:
-        ...
+    def get_message_from_resolved(self, id: int) -> Optional[Message]:
+        return self.resolved["messages"].get(id)

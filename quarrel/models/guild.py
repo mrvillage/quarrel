@@ -58,6 +58,8 @@ if TYPE_CHECKING:
     from ..types.gateway import GuildMembersChunk
     from ..types.guild import Guild as GuildData
     from ..types.guild import GuildFeature
+    from ..types.member import Member as MemberData
+    from ..types.role import Role as RoleData
 
 
 class Guild:
@@ -233,9 +235,27 @@ class Guild:
     def get_member(self, id: int, /) -> Optional[Member]:
         return self._members.get(id)
 
+    def parse_member(
+        self, data: MemberData, /, *, id: Missing[int] = MISSING, partial: bool = False
+    ) -> Member:
+        id = id or int(data.get("user", {"id": 0})["id"])
+        if (member := self.get_channel(id)) is not None:
+            return member.update(data, partial=partial)  # type: ignore
+        member = Member(data, self, self._state, id)
+        self._members[member.id] = member
+        return member
+
     @property
     def roles(self) -> Set[Role]:
         return set(self._roles.values())
 
     def get_role(self, id: int, /) -> Optional[Role]:
         return self._roles.get(id)
+
+    def parse_role(self, data: RoleData, /, *, partial: bool = False) -> Role:
+        id = int(data["id"])
+        if (role := self.get_role(id)) is not None:
+            return role.update(data, partial=partial)  # type: ignore
+        role = Role(data, self, self._state)
+        self._roles[role.id] = role
+        return role

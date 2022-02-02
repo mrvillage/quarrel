@@ -23,7 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 
-__title__ = "disapi.py"
+__title__ = "Quarrel"
 __author__ = "Village"
 __license__ = "MIT"
 __copyright__ = "Copyright 2021-present Village"

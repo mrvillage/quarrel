@@ -22,9 +22,6 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from .button import *
 from .command import *
+from .component import *
 from .interaction import *
-from .item import *
-from .option import *
-from .select import *

@@ -26,11 +26,27 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-__all__ = ("Button",)
+__all__ = ("Component",)
 
 if TYPE_CHECKING:
     ...
 
 
+class Component:
+    ...
+
+
+class ActionRow:
+    ...
+
+
 class Button:
+    ...
+
+
+class Select:
+    ...
+
+
+class Grid:
     ...

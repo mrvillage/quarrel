@@ -24,20 +24,21 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 __all__ = ("Component",)
 
 if TYPE_CHECKING:
-    ...
+    from typing import Tuple
 
-
-class Component:
-    ...
+Component = Union["ActionRow", "Button", "Select"]
 
 
 class ActionRow:
-    ...
+    __slots__ = ("components",)
+
+    def __init__(self, *components: Component) -> None:
+        self.components: Tuple[Component] = components
 
 
 class Button:
@@ -49,4 +50,7 @@ class Select:
 
 
 class Grid:
-    ...
+    __slots__ = ("components", "timeout")
+
+    def __init__(self, *, timeout: Optional[float] = 300) -> None:
+        self.timeout: Optional[float] = timeout

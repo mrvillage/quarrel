@@ -149,7 +149,7 @@ class Bucket:
         webhook_id: Optional[int] = None,
         webhook_token: Optional[str] = None,
     ) -> str:
-        return f"{bucket}/{channel_id}/{guild_id}/{webhook_id}/{webhook_token}"
+        return f"{bucket}___{channel_id}/{guild_id}/{webhook_id}/{webhook_token}"
 
     @classmethod
     def from_major_parameters(
@@ -163,7 +163,7 @@ class Bucket:
         webhook_token: Optional[str] = None,
     ) -> Bucket:
         key = cls.bucket_key(
-            http.route_buckets.get(route_key),
+            http.route_buckets.get(route_key, route_key),
             channel_id=channel_id,
             guild_id=guild_id,
             webhook_id=webhook_id,
@@ -191,9 +191,12 @@ class Bucket:
         if reset_after is not None:
             self.reset_after = float(reset_after)
         bucket = response.headers.get("X-RateLimit-Bucket")
-        if bucket is not None:
+        if bucket is not None and self.bucket is None:
             self.bucket = bucket
             self.http.route_buckets[self.route_key] = bucket
+            self.http.buckets.pop(self.key)
+            self.key = bucket + self.key.split("___")[1]
+            self.http.buckets[self.key] = self
         if self.remaining == 0:
             self.delay_release()
         if response.status == 429:

@@ -150,6 +150,10 @@ class Intents(Flags):
     def guild_scheduled_events(self) -> int:
         return 1 << 16
 
+    @flag
+    def test(self) -> int:
+        return 1 << 32
+
 
 class SystemChannelFlags(Flags):
     @flag

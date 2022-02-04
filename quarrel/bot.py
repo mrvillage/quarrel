@@ -31,7 +31,7 @@ import aiohttp
 
 from .enums import InteractionType
 from .events import EventHandler
-from .gateway import Gateway, GatewayHandler
+from .gateway import GatewayClosure, GatewayHandler, UnknownGatewayMessageType
 from .http import HTTP
 from .missing import MISSING
 from .state import State
@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Coroutine, Dict, List, Optional, Set
 
     from .flags import Intents
+    from .gateway import Gateway
     from .interactions import ApplicationCommand, Interaction
     from .missing import Missing
     from .models import User
@@ -58,52 +59,46 @@ class Bot:
         intents: Intents,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
-        self._application_id: int = application_id
-        self._token: str = token
+        self.application_id: int = application_id
+        self.token: str = token
         self.intents: Intents = intents
 
-        self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
-        self._session: aiohttp.ClientSession = aiohttp.ClientSession()
-        self._http: HTTP = HTTP(self._session, token, self._application_id, self._loop)
+        self.loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
+        self.session: aiohttp.ClientSession = aiohttp.ClientSession()
+        self.http: HTTP = HTTP(self.session, token, self.application_id, self.loop)
         self.listeners: Dict[str, Set[CoroutineFunction]] = {}
-        self._state: State = State(self)
+        self.state: State = State(self)
         self.user: Missing[User] = MISSING
         self.commands: Set[Type[ApplicationCommand]] = set()
         self.registered_commands: Dict[int, Type[ApplicationCommand]] = {}
 
     @property
-    def application_id(self) -> int:
-        return self._application_id
-
-    @property
-    def token(self) -> str:
-        return self._token
-
-    @property
-    def http(self) -> HTTP:
-        return self._http
-
-    @property
     def gateway(self) -> Gateway:
         return self.gateway_handler.gateway
-
-    @property
-    def loop(self) -> asyncio.AbstractEventLoop:
-        return self._loop
-
-    @property
-    def session(self) -> aiohttp.ClientSession:
-        return self._session
-
-    @property
-    def state(self) -> State:
-        return self._state
 
     async def connect(self):
         self.gateway_handler = await GatewayHandler.connect(self)
         self.event_handler = EventHandler(self, self.loop)
-        async for message in self.gateway_handler:
-            await self.event_handler.handle(message["t"], message["d"])
+        while True:
+            try:
+                async for message in self.gateway_handler:
+                    self.event_handler.handle(message["t"], message["d"])
+            except UnknownGatewayMessageType:
+                pass
+            except GatewayClosure as e:
+                if e.close_code not in {
+                    4000,
+                    4001,
+                    4002,
+                    4003,
+                    4005,
+                    4007,
+                    4008,
+                    4009,
+                }:
+                    raise
+                self.state.clear_for_reconnect()
+                await self.gateway_handler.reconnect()
 
     async def run(self):
         await self.register_application_commands()

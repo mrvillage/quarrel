@@ -101,3 +101,8 @@ class State:
         if id in self._users:
             return self._users[id].update(data)
         return self.add_user(User(data, self))
+
+    def clear_for_reconnect(self) -> None:
+        self._guilds.clear()
+        self._messages.clear()
+        self._users.clear()

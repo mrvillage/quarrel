@@ -56,7 +56,8 @@ if TYPE_CHECKING:
 
 
 class GatewayClosure(Exception):
-    ...
+    def __init__(self, close_code: Optional[int]) -> None:
+        self.close_code: Optional[int] = close_code
 
 
 class UnknownGatewayMessageType(Exception):
@@ -153,7 +154,7 @@ class Gateway:
                 aiohttp.WSMsgType.CLOSING,
                 aiohttp.WSMsgType.CLOSE,
             }:
-                raise GatewayClosure(message)
+                raise GatewayClosure(self.socket.close_code)
             elif message.type in {aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.BINARY}:  # type: ignore
                 return self.parse_gateway_message(message.data)  # type: ignore
             raise UnknownGatewayMessageType(message)
@@ -162,7 +163,11 @@ class Gateway:
 
     async def send(self, op: int, data: Any) -> None:
         async with self.ratelimiter:
-            await self.socket.send_json({"op": op, "d": data})
+            try:
+                await self.socket.send_json({"op": op, "d": data})
+            except Exception:
+                if self.socket.closed:
+                    raise GatewayClosure(self.socket.close_code)
 
     def parse_gateway_message(
         self, data: Union[bytes, str]
@@ -202,7 +207,7 @@ class GatewayHandler:
         self.sequence: Optional[int] = sequence
         self.heartbeat: Optional[Heartbeat] = None
         self.session_id: Optional[str] = None
-        self.acked: bool = False
+        self.acked: bool = True
 
     async def __aenter__(self) -> GatewayHandler:
         return self
@@ -228,6 +233,13 @@ class GatewayHandler:
         await gateway_handler.handle_message(await gateway_handler.receive())
         await gateway_handler.identify()
         return gateway_handler
+
+    async def reconnect(self) -> None:
+        self.gateway = await Gateway.connect(
+            self.bot.session, self.gateway_url, self.bot.http.USER_AGENT
+        )
+        await self.handle_message(await self.receive())
+        await self.identify()
 
     async def handle_message(
         self, message: GatewayDispatch

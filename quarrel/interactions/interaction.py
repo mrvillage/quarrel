@@ -36,6 +36,7 @@ __all__ = ("Interaction",)
 if TYPE_CHECKING:
     from typing import Any, Dict, Union
 
+    from ..bot import Bot
     from ..missing import Missing
     from ..models import Channel, Guild
     from ..state import State
@@ -46,6 +47,7 @@ if TYPE_CHECKING:
 class Interaction:
     __slots__ = (
         "_state",
+        "bot",
         "id",
         "application_id",
         "type",
@@ -63,6 +65,7 @@ class Interaction:
 
     def __init__(self, data: InteractionData, state: State) -> None:
         self._state: State = state
+        self.bot: Bot = state.bot
         self.id: int = int(data["id"])
         self.application_id: int = int(data["application_id"])
         self.type: InteractionType = InteractionType(data["type"])

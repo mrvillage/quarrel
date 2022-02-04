@@ -64,7 +64,7 @@ class EventHandler:
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
         self.bot.dispatch(event, *args, **kwargs)
 
-    async def handle(self, event: str, data: Dict[str, Any]):
+    def handle(self, event: str, data: Dict[str, Any]):
         if event == "READY":
             self.bot.gateway_handler.session_id = data["session_id"]
         elif event == "RESUMED":

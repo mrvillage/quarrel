@@ -67,8 +67,6 @@ if TYPE_CHECKING:
     from .command import SlashCommand
     from .interaction import Interaction
 
-    # from .option import Option, Options, OptionType
-
     Check = Callable[
         ["ApplicationCommand", Interaction, "Options"], Coroutine[Any, Any, Any]
     ]
@@ -107,6 +105,7 @@ class ApplicationCommand:
     description: str
     guilds: List[int]
     global_: bool
+    checks: List[Check]
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
@@ -116,14 +115,35 @@ class ApplicationCommand:
     def to_payload(cls) -> ApplicationCommandData:
         ...
 
+    @classmethod
+    def check(
+        cls,
+        *,
+        requires: Missing[Union[str, List[str]]] = MISSING,
+        after_options: bool = True,
+    ) -> Callable[[T], T]:
+        if requires is MISSING:
+            requires = []
+        elif isinstance(requires, str):
+            requires = [requires]
+        __check_requires__ = requires
+        __check_after_options__ = after_options
+
+        def decorator(
+            func: T,
+        ) -> T:
+            setattr(func, "__check_requires__", __check_requires__)
+            setattr(func, "__check_after_options__", __check_after_options__)
+            cls.checks.append(func)
+            return func
+
+        return decorator
+
 
 class SlashCommand(ApplicationCommand):
     type: Final = ApplicationCommandType.CHAT_INPUT
-    name: str
-    description: str
     options: List[OptionType]
     parent: Optional[SlashCommand]
-    checks: List[Check]
 
     def __init_subclass__(
         cls,
@@ -267,9 +287,6 @@ class SlashCommand(ApplicationCommand):
 
 class UserCommand(ApplicationCommand):
     type: Final = ApplicationCommandType.USER
-    name: str
-    description: str
-    checks: List[Check]
 
     def __init_subclass__(
         cls,
@@ -314,9 +331,6 @@ class UserCommand(ApplicationCommand):
 
 class MessageCommand(ApplicationCommand):
     type: Final = ApplicationCommandType.USER
-    name: str
-    description: str
-    checks: List[Check]
 
     def __init_subclass__(
         cls,

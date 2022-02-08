@@ -31,11 +31,15 @@ __all__ = ("CanMessageMixin", "CanConnextMixin", "GuildChannelMixin")
 if TYPE_CHECKING:
     ...
 
+
 class CanMessageMixin:
     ...
+
 
 class CanConnextMixin:
     ...
 
+
 class GuildChannelMixin:
     ...
+

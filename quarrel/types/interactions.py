@@ -24,11 +24,10 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Dict, List, TypedDict, Union
-
-from discord import Emoji
+from typing import Dict, List, Literal, TypedDict, Union
 
 from .channel import GuildChannel
+from .emoji import Emoji
 from .member import Member, MemberWithUser
 from .message import Message
 from .role import Role
@@ -177,3 +176,41 @@ class Option(_OptionOptional):
     type: int  # enum
     name: str
     description: str
+
+
+class _ActionRowOptional(TypedDict, total=False):
+    ...
+
+
+class ActionRow(_ActionRowOptional):
+    type: Literal[1]
+    components: List[Component]
+
+
+class _ButtonOptional(TypedDict, total=False):
+    label: str
+    emoji: Emoji
+    custom_id: str
+    url: str
+    disabled: bool
+
+
+class Button(_ButtonOptional):
+    type: Literal[2]
+    style: int  # enum
+
+
+class _SelectMenuOptional(TypedDict, total=False):
+    placeholder: str
+    min_values: int
+    max_values: int
+    disabled: bool
+
+
+class SelectMenu(_SelectMenuOptional):
+    type: Literal[3]
+    custom_id: str
+    options: List[SelectOption]
+
+
+Component = Union[ActionRow, Button, SelectMenu]

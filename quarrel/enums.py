@@ -38,6 +38,7 @@ __all__ = (
     "ApplicationCommandOptionType",
     "ApplicationCommandType",
     "InteractionType",
+    "ComponentType",
 )
 
 
@@ -128,3 +129,22 @@ class InteractionType(Enum):
     APPLICATION_COMMAND = 2
     MESSAGE_COMPONENT = 3
     APPLICATION_COMMAND_AUTOCOMPLETE = 4
+
+
+class ComponentType(Enum):
+    ACTION_ROW = 1
+    BUTTON = 2
+    SELECT_MENU = 3
+
+
+class ButtonStyle(Enum):
+    PRIMARY = 1
+    BLURPLE = 1
+    SECONDARY = 2
+    GRAY = 2
+    GREY = 2
+    SUCCESS = 3
+    GREEN = 3
+    DANGER = 4
+    RED = 4
+    LINK = 5

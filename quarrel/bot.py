@@ -39,7 +39,7 @@ from .state import State
 __all__ = ("Bot",)
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Coroutine, Dict, List, Optional, Set
+    from typing import Any, Callable, Coroutine, Dict, List, Optional, Set, TypeVar
 
     from .flags import Intents
     from .gateway import Gateway
@@ -49,6 +49,8 @@ if TYPE_CHECKING:
     from .types.interactions import ApplicationCommandInteractionData
 
     CoroutineFunction = Callable[..., Coroutine[Any, Any, Any]]
+    AC = TypeVar("AC", bound=Type[ApplicationCommand])
+    CF = TypeVar("CF", bound=CoroutineFunction)
 
 
 class Bot:
@@ -122,10 +124,8 @@ class Bot:
         except Exception as e:
             self.dispatch("event_error", event, e, *args, **kwargs)
 
-    def listener(
-        self, name: Missing[str] = MISSING
-    ) -> Callable[[CoroutineFunction], CoroutineFunction]:
-        def decorator(coro: CoroutineFunction) -> CoroutineFunction:
+    def listener(self, name: Missing[str] = MISSING) -> Callable[[CF], CF]:
+        def decorator(coro: CF) -> CF:
             if not asyncio.iscoroutinefunction(coro):
                 raise TypeError("Decorated function must be a coroutine function")
             if not name and not coro.__name__.startswith("on_"):
@@ -141,7 +141,7 @@ class Bot:
 
         return decorator
 
-    def event(self, coro: CoroutineFunction) -> CoroutineFunction:
+    def event(self, coro: CF) -> CF:
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError("Decorated function must be a coroutine function")
         if not coro.__name__.startswith("on_"):
@@ -149,14 +149,13 @@ class Bot:
         setattr(self, coro.__name__, coro)
         return coro
 
-    def command(self, command: Type[ApplicationCommand]) -> Type[ApplicationCommand]:
-        return self.add_command(command)
-
-    def add_command(
-        self, command: Type[ApplicationCommand]
-    ) -> Type[ApplicationCommand]:
-        self.commands.add(command)
+    def command(self, command: AC) -> AC:
+        self.add_command(command)
         return command
+
+    def add_command(self, command: Type[ApplicationCommand]) -> Bot:
+        self.commands.add(command)
+        return self
 
     async def register_application_commands(self) -> None:
         commands = {i.name: i for i in self.commands if i.global_}

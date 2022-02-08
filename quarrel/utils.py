@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
+import secrets
 import sys
 import traceback
 from typing import TYPE_CHECKING
@@ -39,6 +40,7 @@ __all__ = (
     "get_datetime_or_none",
     "print_exception_with_header",
     "print_exception",
+    "generate_custom_id",
 )
 
 if TYPE_CHECKING:
@@ -80,3 +82,7 @@ def print_exception_with_header(header: str, error: Exception) -> None:
 
 def print_exception(error: Exception) -> None:
     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
+
+def generate_custom_id(length: int = 100) -> str:
+    return secrets.token_hex(length // 2)

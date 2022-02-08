@@ -107,6 +107,8 @@ class ApplicationCommand:
     global_: bool
     checks: List[Check]
 
+    __slots__ = ("type", "name", "description", "guilds", "global_", "checks")
+
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
         ...
@@ -116,25 +118,31 @@ class ApplicationCommand:
         ...
 
     @classmethod
-    def check(
-        cls,
+    def add_check(
+        cls, func: T, 
         *,
         requires: Missing[Union[str, List[str]]] = MISSING,
         after_options: bool = True,
-    ) -> Callable[[T], T]:
+    ) -> T:
         if requires is MISSING:
             requires = []
         elif isinstance(requires, str):
             requires = [requires]
         __check_requires__ = requires
         __check_after_options__ = after_options
+        return func
 
+    @classmethod
+    def check(
+        cls,
+        *,
+        requires: Missing[Union[str, List[str]]] = MISSING,
+        after_options: bool = True,
+    ) -> Callable[[T], T]:
         def decorator(
             func: T,
         ) -> T:
-            setattr(func, "__check_requires__", __check_requires__)
-            setattr(func, "__check_after_options__", __check_after_options__)
-            cls.checks.append(func)
+            cls.add_check(func, requires=requires, after_options=after_options)
             return func
 
         return decorator
@@ -144,19 +152,20 @@ class SlashCommand(ApplicationCommand):
     type: Final = ApplicationCommandType.CHAT_INPUT
     options: List[OptionType]
     parent: Optional[SlashCommand]
+    __slots__ = ("options", "parent")
 
     def __init_subclass__(
         cls,
-        name: str,
-        description: str,
+        name: Missing[str] = MISSING,
+        description: Missing[str] = MISSING,
         options: Missing[List[OptionType]] = MISSING,
         parent: Optional[SlashCommand] = None,
         checks: Missing[List[Check]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
-        cls.name = name
-        cls.description = description
+        cls.name = name or ""
+        cls.description = description or "\u200b"
         cls.options = options or []
         cls.parent = parent
         cls.checks = checks or []
@@ -269,6 +278,8 @@ class SlashCommand(ApplicationCommand):
 
     @classmethod
     def to_payload(cls) -> ApplicationCommandData:
+        if not cls.name:
+            raise ValueError("Command must have a name")
         options = [option.to_payload() for option in cls.options]
         return {
             "name": cls.name,
@@ -290,14 +301,14 @@ class UserCommand(ApplicationCommand):
 
     def __init_subclass__(
         cls,
-        name: str,
-        description: str,
+        name: Missing[str] = MISSING,
+        description: Missing[str] = MISSING,
         checks: Missing[List[Check]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
-        cls.name = name
-        cls.description = description
+        cls.name = name or ""
+        cls.description = description or "\u200b"
         cls.checks = checks or []
         cls.guilds = guilds or []
         cls.global_ = global_ if global_ is not MISSING else not guilds
@@ -322,6 +333,8 @@ class UserCommand(ApplicationCommand):
 
     @classmethod
     def to_payload(cls) -> ApplicationCommandData:
+        if not cls.name:
+            raise ValueError("Command must have a name")
         return {
             "name": cls.name,
             "description": cls.description,
@@ -334,14 +347,14 @@ class MessageCommand(ApplicationCommand):
 
     def __init_subclass__(
         cls,
-        name: str,
-        description: str,
+        name: Missing[str] = MISSING,
+        description: Missing[str] = MISSING,
         checks: Missing[List[Check]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
-        cls.name = name
-        cls.description = description
+        cls.name = name or ""
+        cls.description = description or "\u200b"
         cls.checks = checks or []
         cls.guilds = guilds or []
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
@@ -362,6 +375,8 @@ class MessageCommand(ApplicationCommand):
 
     @classmethod
     def to_payload(cls) -> ApplicationCommandData:
+        if not cls.name:
+            raise ValueError("Command must have a name")
         return {
             "name": cls.name,
             "description": cls.description,

@@ -119,18 +119,19 @@ class ApplicationCommand:
 
     @classmethod
     def add_check(
-        cls, func: T, 
+        cls,
+        func: Check,
         *,
         requires: Missing[Union[str, List[str]]] = MISSING,
         after_options: bool = True,
-    ) -> T:
+    ) -> Type[ApplicationCommand]:
         if requires is MISSING:
             requires = []
         elif isinstance(requires, str):
             requires = [requires]
-        __check_requires__ = requires
-        __check_after_options__ = after_options
-        return func
+        setattr(func, "__check_requires__", requires)
+        setattr(func, "__check_after_options__", after_options)
+        return cls
 
     @classmethod
     def check(

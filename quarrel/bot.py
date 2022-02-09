@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Type
 
 import aiohttp
 
+from . import utils
 from .enums import InteractionType
 from .events import EventHandler
 from .gateway import GatewayClosure, GatewayHandler, UnknownGatewayMessageType
@@ -190,7 +191,12 @@ class Bot:
             data: ApplicationCommandInteractionData = interaction.data  # type: ignore
             command = self.registered_commands.get(int(data["id"]))
             if command is not None:
-                await command.run_command(interaction)
+                try:
+                    await command.run_command(interaction)
+                except Exception as e:
+                    utils.print_exception_with_header(
+                        f"Ignoring exception while running command {command.name}:", e
+                    )
         elif interaction.type is InteractionType.MESSAGE_COMPONENT:
             ...
         elif interaction.type is InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE:

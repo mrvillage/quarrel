@@ -44,10 +44,13 @@ if TYPE_CHECKING:
 
     from .flags import Intents
     from .gateway import Gateway
-    from .interactions import ApplicationCommand, Interaction
+    from .interactions import ApplicationCommand, Component, Interaction
     from .missing import Missing
     from .models import User
-    from .types.interactions import ApplicationCommandInteractionData
+    from .types.interactions import (
+        ApplicationCommandInteractionData,
+        ComponentInteractionData,
+    )
 
     CoroutineFunction = Callable[..., Coroutine[Any, Any, Any]]
     AC = TypeVar("AC", bound=Type[ApplicationCommand])
@@ -74,6 +77,8 @@ class Bot:
         self.user: Missing[User] = MISSING
         self.commands: Set[Type[ApplicationCommand]] = set()
         self.registered_commands: Dict[int, Type[ApplicationCommand]] = {}
+        self.components: Dict[str, Component] = {}
+        self.regex_components: Dict[str, Component] = {}
 
     @property
     def gateway(self) -> Gateway:
@@ -188,8 +193,11 @@ class Bot:
 
     async def process_interaction(self, interaction: Interaction) -> None:
         if interaction.type is InteractionType.APPLICATION_COMMAND:
+            # will be an application command data, for some reason the type
+            # checker things it is a component when the component processing
+            # section is uncommented
             data: ApplicationCommandInteractionData = interaction.data  # type: ignore
-            command = self.registered_commands.get(int(data["id"]))
+            command = self.registered_commands.get(int(data["id"]))  # type: ignore
             if command is not None:
                 try:
                     await command.run_command(interaction)
@@ -198,6 +206,15 @@ class Bot:
                         f"Ignoring exception while running command {command.name}:", e
                     )
         elif interaction.type is InteractionType.MESSAGE_COMPONENT:
-            ...
+            data: ComponentInteractionData = interaction.data  # type: ignore
+            custom_id = data["custom_id"]
+            component = self.components.get(custom_id)
+            if component is not None:
+                try:
+                    return await component.run_component(interaction)
+                except Exception as e:
+                    return utils.print_exception_with_header(
+                        f"Ignoring exception while processing component {component}:", e
+                    )
         elif interaction.type is InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE:
             ...

@@ -133,7 +133,7 @@ class SlashCommand:
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
-        cls.description = description or "\u200b"
+        cls.description = description or " "
         cls.options = options or []
         cls.parent = parent or None
         if cls.parent is not None:
@@ -321,7 +321,7 @@ class UserCommand:
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
-        cls.description = description or "\u200b"
+        cls.description = description or " "
         cls.checks = checks or []
         cls.guilds = guilds or []
         cls.global_ = global_ if global_ is not MISSING else not guilds
@@ -410,7 +410,7 @@ class MessageCommand:
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
-        cls.description = description or "\u200b"
+        cls.description = description or " "
         cls.checks = checks or []
         cls.guilds = guilds or []
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)

@@ -67,21 +67,32 @@ if TYPE_CHECKING:
     from .command import SlashCommand
     from .interaction import Interaction
 
-    Check = Callable[
-        ["ApplicationCommand", Interaction, "Options"], Coroutine[Any, Any, Any]
+    SlashCommandCheck = Callable[
+        ["SlashCommand", Interaction, "Options"], Coroutine[Any, Any, Any]
+    ]
+    UserCommandCheck = Callable[
+        ["UserCommand", Interaction, Union[User, Member]],
+        Coroutine[Any, Any, Any],
+    ]
+    MessageCommandCheck = Callable[
+        ["MessageCommand", Interaction, Message], Coroutine[Any, Any, Any]
     ]
 
-    T = TypeVar("T", bound=Check)
-    OptionType = Union["Option", "SlashCommand"]
+    SCC = TypeVar("SCC", bound=SlashCommandCheck)
+    UCC = TypeVar("UCC", bound=UserCommandCheck)
+    MCC = TypeVar("MCC", bound=MessageCommandCheck)
+    OptionType = Union["Option", "Type[SlashCommand]"]
     NO = TypeVar("NO", bound="Options")
     Converter = Callable[[Interaction, "Options", Any], Coroutine[Any, Any, Any]]
+
+ApplicationCommand = Union["SlashCommand", "UserCommand", "MessageCommand"]
 
 
 def check(
     *,
     requires: Missing[Union[str, List[str]]] = MISSING,
     after_options: bool = True,
-) -> Callable[[T], T]:
+) -> Callable[[SCC], SCC]:
     if requires is MISSING:
         requires = []
     elif isinstance(requires, str):
@@ -90,8 +101,8 @@ def check(
     __check_after_options__ = after_options
 
     def decorator(
-        func: T,
-    ) -> T:
+        func: SCC,
+    ) -> SCC:
         setattr(func, "__check_requires__", __check_requires__)
         setattr(func, "__check_after_options__", __check_after_options__)
         return func
@@ -99,60 +110,16 @@ def check(
     return decorator
 
 
-class ApplicationCommand:
-    type: ApplicationCommandType
+class SlashCommand:
+    type: Final = ApplicationCommandType.CHAT_INPUT
     name: str
     description: str
     guilds: List[int]
     global_: bool
-    checks: List[Check]
-
-    __slots__ = ("type", "name", "description", "guilds", "global_", "checks")
-
-    @classmethod
-    async def run_command(cls, interaction: Interaction) -> None:
-        ...
-
-    @classmethod
-    def to_payload(cls) -> ApplicationCommandData:
-        ...
-
-    @classmethod
-    def add_check(
-        cls,
-        func: Check,
-        *,
-        requires: Missing[Union[str, List[str]]] = MISSING,
-        after_options: bool = True,
-    ) -> Type[ApplicationCommand]:
-        if requires is MISSING:
-            requires = []
-        elif isinstance(requires, str):
-            requires = [requires]
-        setattr(func, "__check_requires__", requires)
-        setattr(func, "__check_after_options__", after_options)
-        return cls
-
-    @classmethod
-    def check(
-        cls,
-        *,
-        requires: Missing[Union[str, List[str]]] = MISSING,
-        after_options: bool = True,
-    ) -> Callable[[T], T]:
-        def decorator(
-            func: T,
-        ) -> T:
-            cls.add_check(func, requires=requires, after_options=after_options)
-            return func
-
-        return decorator
-
-
-class SlashCommand(ApplicationCommand):
-    type: Final = ApplicationCommandType.CHAT_INPUT
     options: List[OptionType]
     parent: Optional[SlashCommand]
+    checks: List[SlashCommandCheck]
+
     __slots__ = ("options", "parent")
 
     def __init_subclass__(
@@ -160,23 +127,31 @@ class SlashCommand(ApplicationCommand):
         name: Missing[str] = MISSING,
         description: Missing[str] = MISSING,
         options: Missing[List[OptionType]] = MISSING,
-        parent: Optional[SlashCommand] = None,
-        checks: Missing[List[Check]] = MISSING,
+        parent: Missing[SlashCommand] = MISSING,
+        checks: Missing[List[SlashCommandCheck]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
         cls.description = description or "\u200b"
         cls.options = options or []
-        cls.parent = parent
+        cls.parent = parent or None
+        if cls.parent is not None:
+            cls.parent.options.append(cls)
         cls.checks = checks or []
         cls.guilds = guilds or []
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
 
     @classmethod
-    async def run_command(cls, interaction: Interaction) -> None:
+    async def run_command(
+        cls, interaction: Interaction, options_: Missing[List[OptionType]] = MISSING
+    ) -> None:
+        options_ = options_ or interaction.data.get("options", [])  # type: ignore
+        if cls.options and cls.options[0].type is ApplicationCommandType.CHAT_INPUT:
+            parameters: Dict[str, SlashCommand] = {i.name: i for i in cls.options}  # type: ignore
+            await parameters[options_[0]["name"]].run_command(interaction, options_[0].get("options", []))  # type: ignore
         self = cls()
-        arguments: Dict[str, OptionData] = {i.name: i for i in interaction.data.get("options", [])}  # type: ignore
+        arguments: Dict[str, OptionData] = {i.name: i for i in options_}  # type: ignore
         parameters: Dict[str, Option] = {i.name: i for i in cls.options}  # type: ignore
         options = Options()
         for check in cls.checks:
@@ -230,7 +205,7 @@ class SlashCommand(ApplicationCommand):
         try:
             await self.callback(interaction, options)
         except Exception as e:
-            raise e
+            return await self.on_error(interaction, options, e)
 
     async def callback(self, interaction: Interaction, options: Options) -> Any:
         ...
@@ -296,15 +271,52 @@ class SlashCommand(ApplicationCommand):
             else ApplicationCommandOptionType.SUB_COMMAND.value,
         }
 
+    @classmethod
+    def add_check(
+        cls,
+        func: SlashCommandCheck,
+        *,
+        requires: Missing[Union[str, List[str]]] = MISSING,
+        after_options: bool = True,
+    ) -> Type[ApplicationCommand]:
+        if requires is MISSING:
+            requires = []
+        elif isinstance(requires, str):
+            requires = [requires]
+        setattr(func, "__check_requires__", requires)
+        setattr(func, "__check_after_options__", after_options)
+        cls.checks.append(func)
+        return cls
 
-class UserCommand(ApplicationCommand):
+    @classmethod
+    def check(
+        cls,
+        *,
+        requires: Missing[Union[str, List[str]]] = MISSING,
+        after_options: bool = True,
+    ) -> Callable[[SCC], SCC]:
+        def decorator(
+            func: SCC,
+        ) -> SCC:
+            cls.add_check(func, requires=requires, after_options=after_options)
+            return func
+
+        return decorator
+
+
+class UserCommand:
     type: Final = ApplicationCommandType.USER
+    name: str
+    description: str
+    guilds: List[int]
+    global_: bool
+    checks: List[UserCommandCheck]
 
     def __init_subclass__(
         cls,
         name: Missing[str] = MISSING,
         description: Missing[str] = MISSING,
-        checks: Missing[List[Check]] = MISSING,
+        checks: Missing[List[UserCommandCheck]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
@@ -316,14 +328,20 @@ class UserCommand(ApplicationCommand):
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
-        instance = cls()
+        self = cls()
         # for performance, just using type: ignore instead
         # of checks since the Member or User will be present
         user = interaction.get_member_from_resolved(interaction.target_id)  # type: ignore
+        for check in cls.checks:
+            try:
+                if not await check(self, interaction, user):
+                    return
+            except Exception as e:
+                return await self.on_check_error(interaction, user, e)
         if user is None:
             user: User = interaction.get_user_from_resolved(interaction.target_id)  # type: ignore
         try:
-            await instance.callback(interaction, user)
+            await self.callback(interaction, user)
         except Exception as e:
             raise e
 
@@ -342,15 +360,52 @@ class UserCommand(ApplicationCommand):
             "type": cls.type.value,
         }
 
+    async def on_error(
+        self, interaction: Interaction, user: User, error: Exception
+    ) -> None:
+        if isinstance(error, CheckError):
+            utils.print_exception_with_header(
+                f"Ignoring exception in check of command {self.name}:", error.error
+            )
+        else:
+            utils.print_exception_with_header(
+                f"Ignoring exception in command {self.name}:", error
+            )
 
-class MessageCommand(ApplicationCommand):
+    async def on_check_error(
+        self, interaction: Interaction, user: User, error: Exception
+    ) -> None:
+        await self.on_error(interaction, user, CheckError(error))
+
+    @classmethod
+    def add_check(cls, func: UserCommandCheck) -> Type[ApplicationCommand]:
+        cls.checks.append(func)
+        return cls
+
+    @classmethod
+    def check(cls) -> Callable[[UCC], UCC]:
+        def decorator(
+            func: UCC,
+        ) -> UCC:
+            cls.add_check(func)
+            return func
+
+        return decorator
+
+
+class MessageCommand:
     type: Final = ApplicationCommandType.USER
+    name: str
+    description: str
+    guilds: List[int]
+    global_: bool
+    checks: List[MessageCommandCheck]
 
     def __init_subclass__(
         cls,
         name: Missing[str] = MISSING,
         description: Missing[str] = MISSING,
-        checks: Missing[List[Check]] = MISSING,
+        checks: Missing[List[MessageCommandCheck]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
@@ -362,12 +417,18 @@ class MessageCommand(ApplicationCommand):
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
-        instance = cls()
+        self = cls()
         # for performance, just using type: ignore instead
         # of checks since the Message will be present
         message: Message = interaction.get_message_from_resolved(interaction.target_id)  # type: ignore
+        for check in cls.checks:
+            try:
+                if not await check(self, interaction, message):
+                    return
+            except Exception as e:
+                return await self.on_check_error(interaction, message, e)
         try:
-            await instance.callback(interaction, message)
+            await self.callback(interaction, message)
         except Exception as e:
             raise e
 
@@ -383,6 +444,38 @@ class MessageCommand(ApplicationCommand):
             "description": cls.description,
             "type": cls.type.value,
         }
+
+    async def on_error(
+        self, interaction: Interaction, message: Message, error: Exception
+    ) -> None:
+        if isinstance(error, CheckError):
+            utils.print_exception_with_header(
+                f"Ignoring exception in check of command {self.name}:", error.error
+            )
+        else:
+            utils.print_exception_with_header(
+                f"Ignoring exception in command {self.name}:", error
+            )
+
+    async def on_check_error(
+        self, interaction: Interaction, message: Message, error: Exception
+    ) -> None:
+        await self.on_error(interaction, message, CheckError(error))
+
+    @classmethod
+    def add_check(cls, func: MessageCommandCheck) -> Type[ApplicationCommand]:
+        cls.checks.append(func)
+        return cls
+
+    @classmethod
+    def check(cls) -> Callable[[MCC], MCC]:
+        def decorator(
+            func: MCC,
+        ) -> MCC:
+            cls.add_check(func)
+            return func
+
+        return decorator
 
 
 class Option:

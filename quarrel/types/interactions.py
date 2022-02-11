@@ -82,13 +82,12 @@ class ApplicationCommandInteractionData(_ApplicationCommandInteractionDataOption
 
 
 class _ComponentInteractionDataOptional(TypedDict, total=False):
-    custom_id: str
-    component_type: int  # enum
     values: List[str]
 
 
 class ComponentInteractionData(_ComponentInteractionDataOptional):
-    ...
+    custom_id: str
+    component_type: int  # enum
 
 
 class UserMessageCommandInteractionData(ApplicationCommandInteractionData):

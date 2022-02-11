@@ -133,7 +133,7 @@ class SlashCommand:
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
-        cls.description = description or "_"
+        cls.description = description or ""
         cls.options = options or []
         cls.parent = parent or None
         if cls.parent is not None:
@@ -254,8 +254,8 @@ class SlashCommand:
 
     @classmethod
     def to_payload(cls) -> ApplicationCommandData:
-        if not cls.name:
-            raise ValueError("Command must have a name")
+        if not cls.name or not cls.description:
+            raise ValueError("Command must have a name and description")
         options = [option.to_payload() for option in cls.options]
         return {
             "name": cls.name,
@@ -307,7 +307,6 @@ class SlashCommand:
 class UserCommand:
     type: Final = ApplicationCommandType.USER
     name: str
-    description: str
     guilds: List[int]
     global_: bool
     checks: List[UserCommandCheck]
@@ -315,13 +314,11 @@ class UserCommand:
     def __init_subclass__(
         cls,
         name: Missing[str] = MISSING,
-        description: Missing[str] = MISSING,
         checks: Missing[List[UserCommandCheck]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
-        cls.description = description or "_"
         cls.checks = checks or []
         cls.guilds = guilds or []
         cls.global_ = global_ if global_ is not MISSING else not guilds
@@ -343,7 +340,7 @@ class UserCommand:
         try:
             await self.callback(interaction, user)
         except Exception as e:
-            raise e
+            return await self.on_error(interaction, user, e)
 
     async def callback(
         self, interaction: Interaction, user: Union[User, Member]
@@ -356,7 +353,7 @@ class UserCommand:
             raise ValueError("Command must have a name")
         return {
             "name": cls.name,
-            "description": cls.description,
+            "description": "",
             "type": cls.type.value,
         }
 
@@ -396,7 +393,6 @@ class UserCommand:
 class MessageCommand:
     type: Final = ApplicationCommandType.USER
     name: str
-    description: str
     guilds: List[int]
     global_: bool
     checks: List[MessageCommandCheck]
@@ -404,13 +400,11 @@ class MessageCommand:
     def __init_subclass__(
         cls,
         name: Missing[str] = MISSING,
-        description: Missing[str] = MISSING,
         checks: Missing[List[MessageCommandCheck]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
-        cls.description = description or "_"
         cls.checks = checks or []
         cls.guilds = guilds or []
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
@@ -430,7 +424,7 @@ class MessageCommand:
         try:
             await self.callback(interaction, message)
         except Exception as e:
-            raise e
+            return await self.on_error(interaction, message, e)
 
     async def callback(self, interaction: Interaction, message: Message) -> Any:
         ...
@@ -441,7 +435,7 @@ class MessageCommand:
             raise ValueError("Command must have a name")
         return {
             "name": cls.name,
-            "description": cls.description,
+            "description": "",
             "type": cls.type.value,
         }
 

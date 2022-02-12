@@ -31,8 +31,6 @@ from ..enums import ApplicationCommandOptionType, ApplicationCommandType
 from ..errors import CheckError, ConversionError, OptionError
 from ..missing import MISSING
 
-# from .option import Options
-
 __all__ = (
     "ApplicationCommand",
     "SlashCommand",

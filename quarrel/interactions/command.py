@@ -132,7 +132,7 @@ class SlashCommand:
         cls.name = name or ""
         cls.description = description or ""
         cls.options = options or []
-        # pyright has issues unpacking this here
+        # pyright has issues unpacking Unions with Type inside
         cls.parent = parent or None  # type: ignore
         if cls.parent is not None:
             cls.parent.options.append(cls)

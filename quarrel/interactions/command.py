@@ -118,7 +118,7 @@ class SlashCommand:
     parent: Optional[SlashCommand]
     checks: List[SlashCommandCheck]
 
-    __slots__ = ("options", "parent")
+    __slots__ = ()
 
     def __init_subclass__(
         cls,
@@ -309,6 +309,8 @@ class UserCommand:
     global_: bool
     checks: List[UserCommandCheck]
 
+    __slots__ = ()
+
     def __init_subclass__(
         cls,
         name: Missing[str] = MISSING,
@@ -394,6 +396,8 @@ class MessageCommand:
     guilds: List[int]
     global_: bool
     checks: List[MessageCommandCheck]
+
+    __slots__ = ()
 
     def __init_subclass__(
         cls,

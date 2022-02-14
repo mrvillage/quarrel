@@ -114,7 +114,7 @@ class SlashCommand:
     guilds: List[int]
     global_: bool
     options: List[OptionType]
-    parent: Optional[SlashCommand]
+    parent: Optional[Type[SlashCommand]]
     checks: List[SlashCommandCheck]
 
     __slots__ = ()
@@ -124,7 +124,7 @@ class SlashCommand:
         name: Missing[str] = MISSING,
         description: Missing[str] = MISSING,
         options: Missing[List[OptionType]] = MISSING,
-        parent: Missing[SlashCommand] = MISSING,
+        parent: Missing[Type[SlashCommand]] = MISSING,
         checks: Missing[List[SlashCommandCheck]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
@@ -132,7 +132,8 @@ class SlashCommand:
         cls.name = name or ""
         cls.description = description or ""
         cls.options = options or []
-        cls.parent = parent or None
+        # pyright has issues unpacking this here
+        cls.parent = parent or None  # type: ignore
         if cls.parent is not None:
             cls.parent.options.append(cls)
         cls.checks = checks or []

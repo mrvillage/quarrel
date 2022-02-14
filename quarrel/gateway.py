@@ -138,7 +138,7 @@ class Gateway:
     ) -> Gateway:
         return cls(
             await session.ws_connect(
-                f"{url}?v=9&encoding=json&compress=zlib-stream",
+                f"{url}?v=10&encoding=json&compress=zlib-stream",
                 max_msg_size=0,
                 autoclose=False,
                 timeout=30,

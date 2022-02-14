@@ -213,7 +213,7 @@ class Bucket:
 
 
 class HTTP:
-    BASE_URL: ClassVar[str] = "https://discord.com/api/v9"
+    BASE_URL: ClassVar[str] = "https://discord.com/api/v10"
     USER_AGENT: ClassVar[str] = f"DiscordBot (https://github.com/mrvillage/quarrel {__version__}) Python/{sys.version_info[0]}.{sys.version_info[1]} aiohttp/{aiohttp.__version__}"  # type: ignore
 
     def __init__(
@@ -301,7 +301,7 @@ class HTTP:
                 raise HTTPException(response, data)
 
     async def get_gateway_bot(
-        self, encoding: str = "json", compress: bool = True, v: int = 9
+        self, encoding: str = "json", compress: bool = True, v: int = 10
     ) -> str:
         data = await self.request("GET", "/gateway/bot")
         if compress:

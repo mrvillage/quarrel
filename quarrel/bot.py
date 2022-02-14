@@ -84,7 +84,7 @@ class Bot:
     def gateway(self) -> Gateway:
         return self.gateway_handler.gateway
 
-    async def connect(self):
+    async def connect(self) -> None:
         self.gateway_handler = await GatewayHandler.connect(self)
         self.event_handler = EventHandler(self, self.loop)
         while True:
@@ -108,7 +108,7 @@ class Bot:
                 self.state.clear_for_reconnect()
                 await self.gateway_handler.reconnect()
 
-    async def run(self):
+    async def run(self) -> None:
         await self.register_application_commands()
         await self.connect()
 

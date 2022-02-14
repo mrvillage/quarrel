@@ -62,7 +62,6 @@ if TYPE_CHECKING:
     from ..models import Member, Message, User
     from ..types.interactions import Option as OptionData
     from ..types.interactions import PartialApplicationCommand as ApplicationCommandData
-    from .command import SlashCommand
     from .interaction import Interaction
 
     SlashCommandCheck = Callable[

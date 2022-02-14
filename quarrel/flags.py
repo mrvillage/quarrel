@@ -147,6 +147,10 @@ class Intents(Flags):
         return 1 << 14
 
     @flag
+    def message_content(self) -> int:
+        return 1 << 15
+
+    @flag
     def guild_scheduled_events(self) -> int:
         return 1 << 16
 

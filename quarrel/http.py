@@ -79,9 +79,10 @@ class Bucket:
         "reset",
         "reset_after",
         "bucket",
+        "global_",
     )
 
-    def __init__(self, http: HTTP, route_key: str, key: str, /) -> None:
+    def __init__(self, http: HTTP, route_key: str, key: str, global_: bool, /) -> None:
         self.http: HTTP = http
         self.route_key: str = route_key
         self.key: str = key
@@ -92,10 +93,11 @@ class Bucket:
         self.reset: Optional[float] = None
         self.reset_after: Optional[float] = None
         self.bucket: Optional[str] = None
+        self.global_: bool = global_
 
     async def __aenter__(self) -> Bucket:
         await self.lock.acquire()
-        if self.http.global_ratelimit.is_set():
+        if self.http.global_ratelimit.is_set() and self.global_:
             await self.http.global_ratelimit.wait()
         return self
 
@@ -156,6 +158,7 @@ class Bucket:
         cls,
         http: HTTP,
         route_key: str,
+        global_: bool = True,
         /,
         channel_id: Optional[int] = None,
         guild_id: Optional[int] = None,
@@ -171,7 +174,7 @@ class Bucket:
         )
         bucket_ = http.buckets.get(key)
         if bucket_ is None:
-            bucket_ = cls(http, route_key, key)
+            bucket_ = cls(http, route_key, key, global_)
             http.buckets[key] = bucket_
         return bucket_
 
@@ -243,6 +246,8 @@ class HTTP:
         path: str,
         route_parameters: Missing[Mapping[str, Any]] = MISSING,
         files: Missing[Sequence[File]] = MISSING,
+        *,
+        global_: bool = True,
         **kwargs: Any,
     ) -> Any:
         route_parameters = route_parameters or {}
@@ -261,6 +266,7 @@ class HTTP:
         async with Bucket.from_major_parameters(
             self,
             method + path,
+            global_,
             channel_id=route_parameters.get("channel_id"),
             guild_id=route_parameters.get("guild_id"),
             webhook_id=route_parameters.get("webhook_id"),

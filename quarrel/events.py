@@ -71,9 +71,9 @@ class EventHandler:
             ...
 
         try:
-            getattr(self, f"handle_{event.lower()}")(data)
+            self.handlers[event](data)
         # unknown event
-        except AttributeError:
+        except KeyError:
             pass
 
     def handle_ready(self, data: Dict[str, Any]) -> None:
@@ -86,25 +86,25 @@ class EventHandler:
     async def async_handle_ready(self, data: Dict[str, Any]) -> None:
         if self.guild_queue is None:
             self.guild_queue = asyncio.Queue()
+        num_guilds = len(data.get("guilds", []))
         queue = self.guild_queue
         guilds: List[Guild] = []
         chunkers: List[asyncio.Task[Any]] = []
 
         while True:
             try:
-                guild = await asyncio.wait_for(queue.get(), timeout=5)
+                guild = await asyncio.wait_for(queue.get(), timeout=15)
             except asyncio.TimeoutError:
                 break
             if self.chunk_guilds:
                 chunkers.append(asyncio.create_task(guild.chunk()))
             guilds.append(guild)
-
+            if len(guilds) == num_guilds:
+                break
         for guild in guilds:
             await guild.wait_until_chunked()
             self.state.add_guild(guild)
             self.dispatch("guild_available", guild)
-        if chunkers:
-            await asyncio.wait(chunkers)
 
         self.guild_queue = None
         self.dispatch("ready")

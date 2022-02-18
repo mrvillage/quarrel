@@ -80,7 +80,17 @@ class Heartbeat:
             {"op": 1, "d": self.handler.sequence}
         )
 
-    async def task(self) -> None:
+    async def task(self, with_jitter: bool = False) -> None:
+        if with_jitter:
+            try:
+                await asyncio.wait_for(
+                    self.stop_event.wait(), timeout=self.interval * random.random()
+                )
+            except asyncio.TimeoutError:
+                await self.send()
+                self.last_send = time.perf_counter()
+            else:
+                return
         while True:
             try:
                 await asyncio.wait_for(self.stop_event.wait(), timeout=self.interval)
@@ -90,8 +100,8 @@ class Heartbeat:
             else:
                 break
 
-    def start(self) -> None:
-        self.handler.loop.create_task(self.task())
+    def start(self, with_jitter: bool = False) -> None:
+        self.handler.loop.create_task(self.task(with_jitter))
 
     def stop(self) -> None:
         self.stop_event.set()
@@ -165,9 +175,10 @@ class Gateway:
         async with self.ratelimiter:
             try:
                 await self.socket.send_json({"op": op, "d": data})
-            except Exception:
+            except Exception as e:
                 if self.socket.closed:
-                    raise GatewayClosure(self.socket.close_code)
+                    raise GatewayClosure(self.socket.close_code) from e
+                raise
 
     def parse_gateway_message(
         self, data: Union[bytes, str]
@@ -251,8 +262,6 @@ class GatewayHandler:
         if sequence is not None:
             self.sequence = sequence
 
-        # keep alive
-
         # Dispatch
         if op == 0:
             return message
@@ -294,9 +303,7 @@ class GatewayHandler:
     async def handle_hello(self, data: Dict[str, Any]) -> None:
         self.heartbeat_interval: float = data["heartbeat_interval"] / 1000
         self.heartbeat = Heartbeat(self, self.heartbeat_interval)
-        await asyncio.sleep(self.heartbeat_interval * random.random())
-        await self.heartbeat.send()
-        self.heartbeat.start()
+        self.heartbeat.start(True)
 
     async def handle_heartbeat_ack(self, data: Dict[str, Any]) -> None:
         self.acked = True

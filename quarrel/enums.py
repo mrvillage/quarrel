@@ -39,6 +39,7 @@ __all__ = (
     "ApplicationCommandType",
     "InteractionType",
     "ComponentType",
+    "InteractionCallbackType",
 )
 
 
@@ -148,3 +149,13 @@ class ButtonStyle(Enum):
     DANGER = 4
     RED = 4
     LINK = 5
+
+
+class InteractionCallbackType(Enum):
+    PONG = 1
+    CHANNEL_MESSAGE_WITH_SOURCE = 4
+    DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5
+    DEFERRED_UPDATE_MESSAGE = 6
+    UPDATE_MESSAGE = 7
+    APPLICATION_COMMAND_AUTOCOMPLETE_RESPONSE = 8
+    MODAL = 9

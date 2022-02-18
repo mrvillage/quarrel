@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING
 from .. import utils
 from ..enums import ButtonStyle, ComponentType
 from ..errors import CheckError
-from ..missing import MISSING, Missing
+from ..missing import MISSING
 
 __all__ = (
     "Component",
@@ -54,10 +54,11 @@ if TYPE_CHECKING:
         Union,
     )
 
-    from ..missing import MISSING, Missing
+    from ..missing import Missing
     from ..models.emoji import Emoji
     from ..types.interactions import ActionRow as ActionRowData
     from ..types.interactions import Button as ButtonData
+    from ..types.interactions import Component as ComponentData
     from ..types.interactions import SelectMenu as SelectMenuData
     from ..types.interactions import SelectOption as SelectOptionData
     from .interaction import Interaction
@@ -154,7 +155,7 @@ class Button:
         try:
             await self.callback(interaction)
         except Exception as e:
-            ...
+            return await self.on_error(interaction, e)
 
     async def callback(self, interaction: Interaction) -> Any:
         ...
@@ -351,6 +352,19 @@ class Grid:
     def check(cls, func: GC) -> GC:
         cls.add_check(func)
         return func
+
+    def to_payload(self) -> List[ComponentData]:
+        rows: List[List[Component]] = [
+            [i for i in self.components if i.row == r] for r in range(1, 6)
+        ]
+        for i in self.components:
+            if i.row is MISSING:
+                for j in rows:
+                    if sum(k.WIDTH for k in j) > 5:
+                        continue
+                    j.append(i)
+                    break
+        return [ActionRow(*i).to_payload() for i in rows]
 
 
 class SelectOption:

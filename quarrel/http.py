@@ -341,63 +341,57 @@ class HTTP:
         )
 
     def create_interaction_response(
-        self, interaction_id: int, interaction_token: str, response: InteractionResponse
+        self, interaction_id: int, token: str, data: InteractionResponse
     ) -> Response[None]:
         return self.request(
             "POST",
             "/interactions/{interaction_id}/{webhook_token}/callback",
-            {"interaction_id": interaction_id, "webhook_token": interaction_token},
-            json={},
+            {"interaction_id": interaction_id, "webhook_token": token},
+            json=data,
         )
 
-    def get_original_interaction_response(
-        self, interaction_token: str
-    ) -> Response[Message]:
+    def get_original_interaction_response(self, token: str) -> Response[Message]:
         return self.request(
             "GET",
             "/interactions/{application_id}/{webhook_token}/messages/@original",
             {
                 "application_id": self.application_id,
-                "webhook_token": interaction_token,
+                "webhook_token": token,
             },
         )
 
     # TODO proper typing for editing
     def edit_original_interaction_response(
-        self, interaction_token: str, data: Any
+        self, token: str, data: Any
     ) -> Response[Message]:
         return self.request(
             "PATCH",
             "/interactions/{application_id}/{webhook_token}/messages/@original",
             {
                 "application_id": self.application_id,
-                "webhook_token": interaction_token,
+                "webhook_token": token,
             },
             json=data,
         )
 
-    def delete_original_interaction_response(
-        self, interaction_token: str
-    ) -> Response[None]:
+    def delete_original_interaction_response(self, token: str) -> Response[None]:
         return self.request(
             "DELETE",
             "/interactions/{application_id}/{webhook_token}/messages/@original",
             {
                 "application_id": self.application_id,
-                "webhook_token": interaction_token,
+                "webhook_token": token,
             },
         )
 
     # TODO proper typing for creating
-    def create_followup_message(
-        self, interaction_token: str, data: Any
-    ) -> Response[Message]:
+    def create_followup_message(self, token: str, data: Any) -> Response[Message]:
         return self.request(
             "POST",
             "/interactions/{application_id}/{webhook_token}",
             {
                 "application_id": self.application_id,
-                "webhook_token": interaction_token,
+                "webhook_token": token,
             },
             json=data,
         )

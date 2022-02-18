@@ -43,6 +43,11 @@ __all__ = (
     "ApplicationCommand",
     "Choice",
     "Option",
+    "ActionRow",
+    "Button",
+    "SelectMenu",
+    "Component",
+    "InteractionResponse",
     "InteractionCallbackData",
 )
 
@@ -229,6 +234,13 @@ class _InteractionCallbackDataOptional(TypedDict, total=False):
     tts: bool
     content: str
     embeds: List[Embed]
+    # allowed_mentions: AllowedMentions
+    flags: int
+    components: List[Component]
+    # attachments: List[Attachment]
+    choices: List[Choice]
+    custom_id: str
+    title: str
 
 
 class InteractionCallbackData(_InteractionCallbackDataOptional):

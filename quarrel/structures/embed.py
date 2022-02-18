@@ -70,7 +70,7 @@ class Embed:
         description: Missing[str] = MISSING,
         url: Missing[str] = MISSING,
         timestamp: Missing[datetime.datetime] = MISSING,
-        color: Missing[int],
+        color: Missing[int] = MISSING,
     ) -> None:
         self.title: Missing[str] = title
         self.type: str = type or "rich"

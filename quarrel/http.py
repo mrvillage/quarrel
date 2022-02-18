@@ -305,7 +305,8 @@ class HTTP:
                         continue
                     if response.status >= 500:
                         raise ServerError(response, data)
-                    raise HTTPException(response, data)
+                    if response.status != 429:
+                        raise HTTPException(response, data)
             if response is not None:
                 if response.status >= 500:
                     raise ServerError(response, data)

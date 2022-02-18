@@ -197,3 +197,94 @@ class Interaction:
             self.channel,
             self._state,
         )
+
+    async def edit_original_response(
+        self,
+        *,
+        content: Missing[str] = MISSING,
+        embeds: Missing[List[Embed]] = MISSING,
+        # allowed_mentions: Missing[AllowedMentions] = MISSING,
+        grid: Missing[Grid] = MISSING,
+        # files: Missing[List[File]] = MISSING,
+        # attachments: Missing[Attachment] = MISSING,
+    ) -> Message:
+        # TODO proper typing for editing
+        data: Any = {}
+        if content is not MISSING:
+            data["content"] = content
+        if embeds is not MISSING:
+            data["embeds"] = [i.to_payload() for i in embeds]
+        if grid is not MISSING:
+            data["components"] = grid.to_payload()
+        return Message(
+            await self.bot.http.edit_original_interaction_response(self.token, data),
+            self.channel,
+            self._state,
+        )
+
+    async def delete_original_response(self) -> None:
+        return await self.bot.http.delete_original_interaction_response(self.token)
+
+    async def send_followup(
+        self,
+        *,
+        content: Missing[str],
+        embeds: Missing[List[Embed]] = MISSING,
+        # allowed_mentions: Missing[AllowedMentions] = MISSING,
+        ephemeral: Missing[bool] = MISSING,
+        # attachments: Missing[Attachment] = MISSING,
+        tts: Missing[bool] = MISSING,
+        grid: Missing[Grid] = MISSING,
+        # files: Missing[List[File]] = MISSING,
+    ) -> Message:
+        data: Any = {}
+        if content is not MISSING:
+            data["content"] = content
+        if embeds is not MISSING:
+            data["embeds"] = [i.to_payload() for i in embeds]
+        if ephemeral is not MISSING:
+            data["flags"] = 64
+        if tts is not MISSING:
+            data["tts"] = tts
+        if grid is not MISSING:
+            data["components"] = grid.to_payload()
+        return Message(
+            await self.bot.http.create_followup_message(self.token, data),
+            self.channel,
+            self._state,
+        )
+
+    async def get_followup_message(self, message_id: int) -> Message:
+        return Message(
+            await self.bot.http.get_followup_message(self.token, message_id),
+            self.channel,
+            self._state,
+        )
+
+    async def edit_followup_message(
+        self,
+        message_id: int,
+        *,
+        content: Missing[str] = MISSING,
+        embeds: Missing[List[Embed]] = MISSING,
+        # allowed_mentions: Missing[AllowedMentions] = MISSING,
+        grid: Missing[Grid] = MISSING,
+        # files: Missing[List[File]] = MISSING,
+        # attachments: Missing[Attachment] = MISSING,
+    ) -> Message:
+        # TODO proper typing for editing
+        data: Any = {}
+        if content is not MISSING:
+            data["content"] = content
+        if embeds is not MISSING:
+            data["embeds"] = [i.to_payload() for i in embeds]
+        if grid is not MISSING:
+            data["components"] = grid.to_payload()
+        return Message(
+            await self.bot.http.edit_followup_message(self.token, message_id, data),
+            self.channel,
+            self._state,
+        )
+
+    async def delete_followup_message(self, message_id: int) -> None:
+        return await self.bot.http.delete_followup_message(self.token, message_id)

@@ -61,7 +61,12 @@ if TYPE_CHECKING:
 
     from .file import File
     from .missing import Missing
-    from .types.interactions import ApplicationCommand, PartialApplicationCommand
+    from .types.interactions import (
+        ApplicationCommand,
+        InteractionResponse,
+        PartialApplicationCommand,
+    )
+    from .types.message import Message
 
     T = TypeVar("T")
     Response = Coroutine[Any, Any, T]
@@ -333,4 +338,103 @@ class HTTP:
             "/applications/{application_id}/guilds/{guild_id}/commands",
             {"application_id": self.application_id, "guild_id": guild_id},
             json=commands,
+        )
+
+    def create_interaction_response(
+        self, interaction_id: int, interaction_token: str, response: InteractionResponse
+    ) -> Response[None]:
+        return self.request(
+            "POST",
+            "/interactions/{interaction_id}/{webhook_token}/callback",
+            {"interaction_id": interaction_id, "webhook_token": interaction_token},
+            json={},
+        )
+
+    def get_origin_interaction_response(
+        self, interaction_token: str
+    ) -> Response[Message]:
+        return self.request(
+            "GET",
+            "/interactions/{application_id}/{webhook_token}/messages/@original",
+            {
+                "application_id": self.application_id,
+                "webhook_token": interaction_token,
+            },
+        )
+
+    # TODO proper typing for editing
+    def edit_original_interaction_response(
+        self, interaction_token: str, data: Any
+    ) -> Response[Message]:
+        return self.request(
+            "PATCH",
+            "/interactions/{application_id}/{webhook_token}/messages/@original",
+            {
+                "application_id": self.application_id,
+                "webhook_token": interaction_token,
+            },
+            json=data,
+        )
+
+    def delete_original_interaction_response(
+        self, interaction_token: str
+    ) -> Response[None]:
+        return self.request(
+            "DELETE",
+            "/interactions/{application_id}/{webhook_token}/messages/@original",
+            {
+                "application_id": self.application_id,
+                "webhook_token": interaction_token,
+            },
+        )
+
+    # TODO proper typing for creating
+    def create_followup_message(
+        self, interaction_token: str, data: Any
+    ) -> Response[Message]:
+        return self.request(
+            "POST",
+            "/interactions/{application_id}/{webhook_token}",
+            {
+                "application_id": self.application_id,
+                "webhook_token": interaction_token,
+            },
+            json=data,
+        )
+
+    def get_followup_message(self, token: str, message_id: int) -> Response[Message]:
+        return self.request(
+            "GET",
+            "/interactions/{application_id}/{webhook_token}/messages/{message_id}",
+            {
+                "application_id": self.application_id,
+                "webhook_token": token,
+                "message_id": message_id,
+            },
+        )
+
+    # TODO proper typing for editing
+    def edit_followup_message(
+        self, token: str, message_id: int, data: Any
+    ) -> Response[Message]:
+        return self.request(
+            "PATCH",
+            "/interactions/{application_id}/{webhook_token}/messages/{message_id}",
+            {
+                "application_id": self.application_id,
+                "webhook_token": token,
+                "message_id": message_id,
+            },
+            json=data,
+        )
+
+    def delete_followup_message(self, token: str, message_id: int) -> Response[None]:
+        return self.request(
+            "DELETE",
+            "/interactions/{application_id}/{webhook_token}/messages/{message_id}",
+            {
+                "application_id": self.application_id,
+                "webhook_token": token,
+                "message_id": message_id,
+            },
         )

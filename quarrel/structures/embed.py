@@ -35,6 +35,14 @@ if TYPE_CHECKING:
     from typing import List
 
     from ..missing import Missing
+    from ..types.embed import Embed as EmbedData
+    from ..types.embed import EmbedAuthor as EmbedAuthorData
+    from ..types.embed import EmbedField as EmbedFieldData
+    from ..types.embed import EmbedFooter as EmbedFooterData
+    from ..types.embed import EmbedImage as EmbedImageData
+    from ..types.embed import EmbedProvider as EmbedProviderData
+    from ..types.embed import EmbedThumbnail as EmbedThumbnailData
+    from ..types.embed import EmbedVideo as EmbedVideoData
 
 
 class Embed:
@@ -84,6 +92,34 @@ class Embed:
         self.fields.append(EmbedField(name=name, value=value, inline=inline))
         return self
 
+    def to_payload(self) -> EmbedData:
+        payload: EmbedData = {"type": self.type}
+        if self.title is not MISSING:
+            payload["title"] = self.title
+        if self.description is not MISSING:
+            payload["description"] = self.description
+        if self.url is not MISSING:
+            payload["url"] = self.url
+        if self.timestamp is not MISSING:
+            payload["timestamp"] = str(self.timestamp)
+        if self.color is not MISSING:
+            payload["color"] = self.color
+        if self.footer:
+            payload["footer"] = self.footer.to_payload()
+        if self.image:
+            payload["image"] = self.image.to_payload()
+        if self.thumbnail:
+            payload["thumbnail"] = self.thumbnail.to_payload()
+        if self.video:
+            payload["video"] = self.video.to_payload()
+        if self.provider:
+            payload["provider"] = self.provider.to_payload()
+        if self.author:
+            payload["author"] = self.author.to_payload()
+        if self.fields:
+            payload["fields"] = [i.to_payload() for i in self.fields]
+        return payload
+
 
 class EmbedFooter:
     __slots__ = ("text", "icon_url", "proxy_icon_url")
@@ -101,6 +137,16 @@ class EmbedFooter:
 
     def __bool__(self) -> bool:
         return self.text is not MISSING
+
+    def to_payload(self) -> EmbedFooterData:
+        payload: EmbedFooterData = {}
+        if self.text is not MISSING:
+            payload["text"] = self.text
+        if self.icon_url is not MISSING:
+            payload["icon_url"] = self.icon_url
+        if self.proxy_icon_url is not MISSING:
+            payload["proxy_icon_url"] = self.proxy_icon_url
+        return payload
 
 
 class EmbedImage:
@@ -122,6 +168,18 @@ class EmbedImage:
     def __bool__(self) -> bool:
         return self.url is not MISSING
 
+    def to_payload(self) -> EmbedImageData:
+        payload: EmbedImageData = {}
+        if self.url is not MISSING:
+            payload["url"] = self.url
+        if self.proxy_url is not MISSING:
+            payload["proxy_url"] = self.proxy_url
+        if self.height is not MISSING:
+            payload["height"] = self.height
+        if self.width is not MISSING:
+            payload["width"] = self.width
+        return payload
+
 
 class EmbedThumbnail:
     __slots__ = ("url", "proxy_url", "height", "width")
@@ -141,6 +199,18 @@ class EmbedThumbnail:
 
     def __bool__(self) -> bool:
         return self.url is not MISSING
+
+    def to_payload(self) -> EmbedThumbnailData:
+        payload: EmbedThumbnailData = {}
+        if self.url is not MISSING:
+            payload["url"] = self.url
+        if self.proxy_url is not MISSING:
+            payload["proxy_url"] = self.proxy_url
+        if self.height is not MISSING:
+            payload["height"] = self.height
+        if self.width is not MISSING:
+            payload["width"] = self.width
+        return payload
 
 
 class EmbedVideo:
@@ -167,6 +237,18 @@ class EmbedVideo:
             or self.width is not MISSING
         )
 
+    def to_payload(self) -> EmbedVideoData:
+        payload: EmbedVideoData = {}
+        if self.url is not MISSING:
+            payload["url"] = self.url
+        if self.proxy_url is not MISSING:
+            payload["proxy_url"] = self.proxy_url
+        if self.height is not MISSING:
+            payload["height"] = self.height
+        if self.width is not MISSING:
+            payload["width"] = self.width
+        return payload
+
 
 class EmbedProvider:
     __slots__ = ("name", "url")
@@ -179,6 +261,14 @@ class EmbedProvider:
 
     def __bool__(self) -> bool:
         return self.name is not MISSING or self.url is not MISSING
+
+    def to_payload(self) -> EmbedProviderData:
+        payload: EmbedProviderData = {}
+        if self.name is not MISSING:
+            payload["name"] = self.name
+        if self.url is not MISSING:
+            payload["url"] = self.url
+        return payload
 
 
 class EmbedAuthor:
@@ -193,12 +283,24 @@ class EmbedAuthor:
         proxy_icon_url: Missing[str] = MISSING,
     ) -> None:
         self.name: Missing[str] = name
-        self.url: Missing[str] = MISSING
+        self.url: Missing[str] = url
         self.icon_url: Missing[str] = icon_url
         self.proxy_icon_url: Missing[str] = proxy_icon_url
 
     def __bool__(self) -> bool:
         return self.name is not MISSING
+
+    def to_payload(self) -> EmbedAuthorData:
+        payload: EmbedAuthorData = {}
+        if self.name is not MISSING:
+            payload["name"] = self.name
+        if self.url is not MISSING:
+            payload["url"] = self.url
+        if self.icon_url is not MISSING:
+            payload["icon_url"] = self.icon_url
+        if self.proxy_icon_url is not MISSING:
+            payload["proxy_icon_url"] = self.proxy_icon_url
+        return payload
 
 
 class EmbedField:
@@ -217,3 +319,13 @@ class EmbedField:
 
     def __bool__(self) -> bool:
         return self.name is not MISSING and self.value is not MISSING
+
+    def to_payload(self) -> EmbedFieldData:
+        payload: EmbedFieldData = {}
+        if self.name is not MISSING:
+            payload["name"] = self.name
+        if self.value is not MISSING:
+            payload["value"] = self.value
+        if self.inline is not MISSING:
+            payload["inline"] = self.inline
+        return payload

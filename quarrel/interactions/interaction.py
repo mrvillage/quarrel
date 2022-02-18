@@ -34,14 +34,19 @@ from ..models import Member, Message, Role, User
 __all__ = ("Interaction",)
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Union
+    from typing import Any, Dict, List, Union
 
     from ..bot import Bot
+    from ..enums import InteractionCallbackType
     from ..missing import Missing
     from ..models import Channel, Guild
     from ..state import State
+    from ..structures.embed import Embed
+    from ..types.interactions import Choice
     from ..types.interactions import Interaction as InteractionData
+    from ..types.interactions import InteractionCallbackData
     from ..types.interactions import InteractionData as InteractionDataData
+    from .component import Grid
 
 
 class Interaction:
@@ -154,3 +159,41 @@ class Interaction:
 
     def get_message_from_resolved(self, id: int) -> Optional[Message]:
         return self.resolved["messages"].get(id)
+
+    async def respond(
+        self,
+        type: InteractionCallbackType,
+        *,
+        content: Missing[str] = MISSING,
+        embeds: Missing[List[Embed]] = MISSING,
+        # allowed_mentions: Missing[AllowedMentions] = MISSING,
+        ephemeral: Missing[bool] = MISSING,
+        # attachments: Missing[Attachment] = MISSING,
+        tts: Missing[bool] = MISSING,
+        grid: Missing[Grid] = MISSING,
+        choices: Missing[List[Choice]] = MISSING,
+        # modal: Missing[Modal] = MISSING,
+    ) -> None:
+        data: InteractionCallbackData = {}
+        if content is not MISSING:
+            data["content"] = content
+        if embeds is not MISSING:
+            data["embeds"] = [i.to_payload() for i in embeds]
+        if ephemeral is not MISSING:
+            data["flags"] = 64
+        if tts is not MISSING:
+            data["tts"] = tts
+        if grid is not MISSING:
+            data["components"] = grid.to_payload()
+        if choices is not MISSING:
+            data["choices"] = choices
+        await self.bot.http.create_interaction_response(
+            self.id, self.token, {"type": type.value, "data": data}
+        )
+
+    async def get_original_response(self) -> Message:
+        return Message(
+            await self.bot.http.get_original_interaction_response(self.token),
+            self.channel,
+            self._state,
+        )

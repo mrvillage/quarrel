@@ -27,6 +27,7 @@ from __future__ import annotations
 from typing import Dict, List, Literal, TypedDict, Union
 
 from .channel import GuildChannel
+from .embed import Embed
 from .emoji import Emoji
 from .member import Member, MemberWithUser
 from .message import Message
@@ -42,6 +43,7 @@ __all__ = (
     "ApplicationCommand",
     "Choice",
     "Option",
+    "InteractionCallbackData",
 )
 
 
@@ -213,3 +215,21 @@ class SelectMenu(_SelectMenuOptional):
 
 
 Component = Union[ActionRow, Button, SelectMenu]
+
+
+class _InteractionResponseOptional(TypedDict, total=False):
+    data: InteractionCallbackData
+
+
+class InteractionResponse(_InteractionResponseOptional):
+    type: int  # enum
+
+
+class _InteractionCallbackDataOptional(TypedDict, total=False):
+    tts: bool
+    content: str
+    embeds: List[Embed]
+
+
+class InteractionCallbackData(_InteractionCallbackDataOptional):
+    ...

@@ -350,7 +350,7 @@ class HTTP:
             json={},
         )
 
-    def get_origin_interaction_response(
+    def get_original_interaction_response(
         self, interaction_token: str
     ) -> Response[Message]:
         return self.request(

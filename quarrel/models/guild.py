@@ -115,6 +115,7 @@ class Guild:
     def __init__(self, data: GuildData, state: State) -> None:
         self._state: State = state
         self.id: int = int(data["id"])
+        self.update(data)
 
     def update(self, data: GuildData) -> Guild:
         self.name: str = data["name"]
@@ -221,7 +222,7 @@ class Guild:
         chunks: List[GuildMembersChunk] = []
         while True:
             try:
-                chunk = await queue.get()
+                chunk = await asyncio.wait_for(queue.get(), timeout=15)
             except asyncio.TimeoutError:
                 break
             chunks.append(chunk)

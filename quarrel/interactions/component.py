@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from .. import utils
 from ..enums import ButtonStyle, ComponentType
@@ -42,17 +42,7 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Callable,
-        Coroutine,
-        Final,
-        List,
-        Optional,
-        Tuple,
-        TypeVar,
-        Union,
-    )
+    from typing import Any, Callable, Coroutine, Final, List, Optional, Tuple, TypeVar
 
     from ..missing import Missing
     from ..models.emoji import Emoji

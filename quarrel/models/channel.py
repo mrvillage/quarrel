@@ -87,7 +87,8 @@ class TextChannel:
     __slots__ = (
         "guild",
         "_state",
-        "id" "type",
+        "id",
+        "type",
         "guild_id",
         "position",
         "permission_overwrites",
@@ -102,13 +103,13 @@ class TextChannel:
         self.guild: Guild = guild
         self._state: State = state
         self.id: int = int(data["id"])
+        self.guild_id: int = guild.id
         self.update(data)
 
     def update(
         self, data: Union[TextChannelData, NewsChannelData], /, *, partial: bool = False
     ) -> TextChannel:
         self.type: ChannelType = ChannelType(data["type"])
-        self.guild_id: int = int(data["guild_id"])
 
         self.position: Missing[int] = data.get("position", MISSING)
         self.permission_overwrites: List[PermissionOverwrite] = data.get(

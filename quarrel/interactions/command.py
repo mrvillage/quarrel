@@ -559,26 +559,26 @@ class Option:
             id = int(value)
             if interaction.guild_id is not MISSING:
                 if m := interaction.get_member_from_resolved(id):
-                    return m
-                if r := interaction.get_role_from_resolver(id):
-                    return r
-            if u := interaction.get_user_from_resolved(id):
-                return u
+                    value = m
+                elif r := interaction.get_role_from_resolver(id):
+                    value = r
+            elif u := interaction.get_user_from_resolved(id):
+                value = u
         elif self.type is ApplicationCommandOptionType.CHANNEL:
             id = int(value)
             if c := interaction.get_channel_from_resolved(id):
-                return c
+                value = c
         elif self.type is ApplicationCommandOptionType.USER:
             id = int(value)
             if m := interaction.get_member_from_resolved(id):
-                return m
-            if u := interaction.get_user_from_resolved(id):
-                return u
+                value = m
+            elif u := interaction.get_user_from_resolved(id):
+                value = u
         elif self.type is ApplicationCommandOptionType.ROLE:
             id = int(value)
             if r := interaction.get_role_from_resolver(id):
-                return r
-        elif self.type is ApplicationCommandOptionType.STRING and self.converters:
+                value = r
+        if self.converters:
             errors: List[Exception] = []
             for converter in self.converters:
                 try:
@@ -586,8 +586,7 @@ class Option:
                 except Exception as e:
                     errors.append(e)
             raise ConversionError(self, value, errors)
-        else:
-            return value
+        return value
 
 
 class Options:

@@ -44,6 +44,7 @@ from .emoji import Emoji
 from .member import Member
 from .role import Role
 from .sticker import Sticker
+from .user import User
 from .voice_state import VoiceState
 
 __all__ = ("Guild",)
@@ -197,7 +198,9 @@ class Guild:
             VoiceState(i, self._state) for i in data.get("voice_states", [])
         ]
         self._voice_states: Dict[int, VoiceState] = {v.user_id: v for v in voice_states}
-        members = [Member(i, self, self._state) for i in data.get("members", [])]
+        members = [
+            Member(i, MISSING, self, self._state) for i in data.get("members", [])
+        ]
         self._members: Dict[int, Member] = {m.id: m for m in members}
         channels = [
             GuildChannelFactory(i, self, self._state)
@@ -233,7 +236,7 @@ class Guild:
 
         for chunk in chunks:
             for member in chunk["members"]:
-                mem = Member(member, self, self._state)
+                mem = Member(member, MISSING, self, self._state)
                 self._members[mem.id] = mem
         self._chunk_event.set()
         self._chunk_event = None
@@ -286,12 +289,18 @@ class Guild:
         return self._members.get(id)
 
     def parse_member(
-        self, data: MemberData, /, *, id: Missing[int] = MISSING, partial: bool = False
+        self,
+        data: MemberData,
+        user: Missing[User],
+        /,
+        *,
+        id: Missing[int] = MISSING,
+        partial: bool = False,
     ) -> Member:
         id = id or int(data.get("user", {"id": 0})["id"])
         if (member := self.get_channel(id)) is not None:
             return member.update(data, partial=partial)  # type: ignore
-        member = Member(data, self, self._state, id)
+        member = Member(data, user, self, self._state, id)
         self._members[member.id] = member
         return member
 

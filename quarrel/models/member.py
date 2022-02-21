@@ -24,15 +24,16 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
+from ..asset import Asset
 from ..missing import MISSING
 from .user import User
 
 __all__ = ("Member",)
 
 if TYPE_CHECKING:
-    from typing import Union
+    from typing import Optional, Union
 
     from ..missing import Missing
     from ..state import State
@@ -50,7 +51,7 @@ class Member:
         "deaf",
         "mute",
         "nickname",
-        "_avatar",
+        "avatar",
         "premium_since",
         "pending",
         "user",
@@ -59,10 +60,17 @@ class Member:
     def __init__(
         self,
         data: Union[MemberData, MemberWithUser],
+        user: Missing[User],
         guild: Guild,
         state: State,
         id: int = 0,
     ) -> None:
+        if user is MISSING:
+            user_data = data.get("user", MISSING)
+            if user_data is not MISSING:
+                self.user: User = state.parse_user(user_data)
+        else:
+            self.user: User = user
         self.guild: Guild = guild
         self._state: State = state
         self.id = user_id if (user_id := int(data.get("user", {"id": 0})["id"])) else id
@@ -75,7 +83,14 @@ class Member:
         self.mute: bool = data["mute"]
 
         self.nickname: Missing[Optional[str]] = data.get("nick", MISSING)
-        self._avatar: Missing[Optional[str]] = data.get("avatar", MISSING)
+        avatar = data.get("avatar", MISSING)
+        self.avatar: Missing[Optional[Asset]] = (
+            Asset.guild_member_avatar(
+                self.guild.id, self.id, avatar, http=self._state.bot.http
+            )
+            if avatar is not MISSING and avatar is not None
+            else avatar
+        )
         self.premium_since: Missing[Optional[str]] = data.get("premium_since", MISSING)
         self.pending: Missing[bool] = data.get("pending", MISSING)
 
@@ -83,7 +98,17 @@ class Member:
         # self.permissions
 
         if (user := data.get("user", MISSING)) is not MISSING:
-            self.user: Missing[User] = self._state.parse_user(user)
-        else:
-            self.user: Missing[User] = MISSING
+            self.user.update(user)
         return self
+
+    @property
+    def username(self) -> str:
+        return self.user.username
+
+    @property
+    def discriminator(self) -> str:
+        return self.user.discriminator
+
+    @property
+    def display_avatar(self) -> Asset:
+        return self.avatar or self.user.display_avatar

@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..asset import Asset
 from ..missing import MISSING
 
 __all__ = ("User",)
@@ -39,7 +40,21 @@ if TYPE_CHECKING:
 
 
 class User:
-    __slots__ = ("_state", "id", "username", "discriminator", "_avatar", "bot", "system", "banner", "accent_color", "verified", "email", "public_flags")
+    __slots__ = (
+        "_state",
+        "id",
+        "username",
+        "discriminator",
+        "avatar",
+        "bot",
+        "system",
+        "banner",
+        "accent_color",
+        "verified",
+        "email",
+        "public_flags",
+    )
+
     def __init__(self, data: UserData, state: State) -> None:
         self._state: State = state
         self.id: int = int(data["id"])
@@ -48,7 +63,12 @@ class User:
     def update(self, data: UserData) -> User:
         self.username: str = data["username"]
         self.discriminator: str = data["discriminator"]
-        self._avatar: Optional[str] = data["avatar"]
+        avatar = data["avatar"]
+        self.avatar: Optional[Asset] = (
+            Asset.user_avatar(self.id, avatar, http=self._state.bot.http)
+            if avatar is not None
+            else None
+        )
 
         self.bot: Missing[bool] = data.get("bot", MISSING)
         self.system: Missing[bool] = data.get("system", MISSING)
@@ -58,3 +78,9 @@ class User:
         self.email: Missing[Optional[str]] = data.get("email", MISSING)
         self.public_flags: int = data.get("public_flags", 0)
         return self
+
+    @property
+    def display_avatar(self) -> Asset:
+        return self.avatar or Asset.default_user_avatar(
+            int(self.discriminator), http=self._state.bot.http
+        )

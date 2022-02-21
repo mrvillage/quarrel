@@ -87,7 +87,7 @@ class Interaction:
         member = data.get("member", MISSING)
         guild = self.guild
         if member is not MISSING and guild is not None:
-            member = Member(member, guild, state)
+            member = Member(member, MISSING, guild, state)
             self.user: Union[Member, User] = member
         else:
             # there will always be a member or user included
@@ -115,7 +115,7 @@ class Interaction:
                     for key, value in members.items():
                         value["user"] = users[key]
                         self.resolved["members"][int(key)] = guild.parse_member(
-                            value, partial=True
+                            value, self.resolved["users"][int(key)], partial=True
                         )
                 if roles := resolved.get("roles", {}):
                     for key, value in roles.items():

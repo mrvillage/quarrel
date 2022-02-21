@@ -28,7 +28,16 @@ from typing import TYPE_CHECKING
 
 from ..missing import MISSING
 
-__all__ = ("Embed",)
+__all__ = (
+    "Embed",
+    "EmbedFooter",
+    "EmbedImage",
+    "EmbedThumbnail",
+    "EmbedVideo",
+    "EmbedProvider",
+    "EmbedAuthor",
+    "EmbedField",
+)
 
 if TYPE_CHECKING:
     import datetime

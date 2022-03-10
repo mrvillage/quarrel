@@ -130,13 +130,19 @@ class SlashCommand:
     ) -> None:
         cls.name = name or ""
         cls.description = description or ""
-        cls.options = options or []
+        cls.options = [j for i in cls.__mro__ for j in getattr(i, "options", [])] + (
+            options or []
+        )
         # pyright has issues unpacking Unions with Type inside
         cls.parent = parent or None  # type: ignore
         if cls.parent is not None:
             cls.parent.options.append(cls)
-        cls.checks = checks or []
-        cls.guilds = guilds or []
+        cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+            checks or []
+        )
+        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+            guilds or []
+        )
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
 
     @classmethod
@@ -318,8 +324,12 @@ class UserCommand:
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
-        cls.checks = checks or []
-        cls.guilds = guilds or []
+        cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+            checks or []
+        )
+        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+            guilds or []
+        )
         cls.global_ = global_ if global_ is not MISSING else not guilds
 
     @classmethod
@@ -406,8 +416,12 @@ class MessageCommand:
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
-        cls.checks = checks or []
-        cls.guilds = guilds or []
+        cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+            checks or []
+        )
+        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+            guilds or []
+        )
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
 
     @classmethod

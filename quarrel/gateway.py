@@ -224,7 +224,7 @@ class GatewayHandler:
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        await self.gateway.socket.close()
+        await self.gateway.close(1000)
 
     def __aiter__(self) -> GatewayHandler:
         return self
@@ -368,8 +368,12 @@ class GatewayHandler:
         await self.send(8, data)
 
     async def close_and_resume(self) -> None:
+        if self.heartbeat is not None:
+            self.heartbeat.stop()
         await self.gateway.close(1002)
         self.gateway = await Gateway.connect(
             self.bot.session, self.gateway_url, self.bot.http.USER_AGENT
         )
         await self.resume()
+        self.heartbeat = Heartbeat(self, self.heartbeat_interval)
+        self.heartbeat.start(True)

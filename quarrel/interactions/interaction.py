@@ -190,6 +190,8 @@ class Interaction:
         await self.bot.http.create_interaction_response(
             self.id, self.token, {"type": type.value, "data": data}
         )
+        if grid is not MISSING:
+            grid.store(self.bot)
 
     async def get_original_response(self) -> Message:
         return Message(
@@ -216,11 +218,14 @@ class Interaction:
             data["embeds"] = [i.to_payload() for i in embeds]
         if grid is not MISSING:
             data["components"] = grid.to_payload()
-        return Message(
+        message = Message(
             await self.bot.http.edit_original_interaction_response(self.token, data),
             self.channel,
             self._state,
         )
+        if grid is not MISSING:
+            grid.store(self.bot)
+        return message
 
     async def delete_original_response(self) -> None:
         return await self.bot.http.delete_original_interaction_response(self.token)
@@ -248,11 +253,14 @@ class Interaction:
             data["tts"] = tts
         if grid is not MISSING:
             data["components"] = grid.to_payload()
-        return Message(
+        message = Message(
             await self.bot.http.create_followup_message(self.token, data),
             self.channel,
             self._state,
         )
+        if grid is not MISSING:
+            grid.store(self.bot)
+        return message
 
     async def get_followup_message(self, message_id: int) -> Message:
         return Message(
@@ -280,11 +288,14 @@ class Interaction:
             data["embeds"] = [i.to_payload() for i in embeds]
         if grid is not MISSING:
             data["components"] = grid.to_payload()
-        return Message(
+        message = Message(
             await self.bot.http.edit_followup_message(self.token, message_id, data),
             self.channel,
             self._state,
         )
+        if grid is not MISSING:
+            grid.store(self.bot)
+        return message
 
     async def delete_followup_message(self, message_id: int) -> None:
         return await self.bot.http.delete_followup_message(self.token, message_id)

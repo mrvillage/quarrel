@@ -40,6 +40,7 @@ from .state import State
 __all__ = ("Bot",)
 
 if TYPE_CHECKING:
+    import re
     from typing import Any, Callable, Coroutine, Dict, List, Optional, Set, TypeVar
 
     from .flags import Intents
@@ -55,6 +56,7 @@ if TYPE_CHECKING:
     CoroutineFunction = Callable[..., Coroutine[Any, Any, Any]]
     AC = TypeVar("AC", bound=Type[ApplicationCommand])
     CF = TypeVar("CF", bound=CoroutineFunction)
+    C = TypeVar("C", bound=Component)
 
 
 class Bot:
@@ -78,7 +80,7 @@ class Bot:
         self.commands: Set[Type[ApplicationCommand]] = set()
         self.registered_commands: Dict[int, Type[ApplicationCommand]] = {}
         self.components: Dict[str, Component] = {}
-        self.regex_components: Dict[str, Component] = {}
+        self.regex_components: Dict[re.Pattern[str], Component] = {}
 
     @property
     def gateway(self) -> Gateway:
@@ -163,6 +165,17 @@ class Bot:
         self.commands.add(command)
         return self
 
+    def component(self, component: C) -> C:
+        self.add_component(component)
+        return component
+
+    def add_component(self, component: Component) -> Bot:
+        if component.pattern is None:
+            self.regex_components[component.pattern] = component
+        elif component.custom_id is not MISSING:
+            self.components[component.custom_id] = component
+        return self
+
     async def register_application_commands(self) -> None:
         commands = {i.name: i for i in self.commands if i.global_}
         if commands:
@@ -211,10 +224,22 @@ class Bot:
             component = self.components.get(custom_id)
             if component is not None:
                 try:
-                    return await component.run_component(interaction)
+                    return await component.run_component(interaction, {})
                 except Exception as e:
                     return utils.print_exception_with_header(
                         f"Ignoring exception while processing component {component}:", e
                     )
+            for pattern, component in self.regex_components.items():
+                match = pattern.match(custom_id)
+                if match is not None:
+                    try:
+                        return await component.run_component(
+                            interaction, match.groupdict()
+                        )
+                    except Exception as e:
+                        return utils.print_exception_with_header(
+                            f"Ignoring exception while processing component {component}:",
+                            e,
+                        )
         elif interaction.type is InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE:
             ...

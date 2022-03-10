@@ -43,8 +43,19 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Coroutine, Final, List, Optional, Tuple, TypeVar
+    from typing import (
+        Any,
+        Callable,
+        Coroutine,
+        Dict,
+        Final,
+        List,
+        Optional,
+        Tuple,
+        TypeVar,
+    )
 
+    from ..bot import Bot
     from ..missing import Missing
     from ..models.emoji import Emoji
     from ..types.interactions import ActionRow as ActionRowData
@@ -54,15 +65,17 @@ if TYPE_CHECKING:
     from ..types.interactions import SelectOption as SelectOptionData
     from .interaction import Interaction
 
+    Groups = Dict[str, str]
     # something something indirect reference to itself, doesn't seem to break anything
-    ButtonCheck = Callable[["Component", Interaction], Coroutine[Any, Any, Any]]  # type: ignore
-    SelectMenuCheck = Callable[["Component", Interaction, Tuple[str]], Coroutine[Any, Any, Any]]  # type: ignore
-    GridCheck = Callable[["Grid", "Component", Interaction, Tuple[str]], Coroutine[Any, Any, Any]]  # type: ignore
+    ButtonCheck = Callable[["Component", Interaction, Groups], Coroutine[Any, Any, Any]]  # type: ignore
+    SelectMenuCheck = Callable[["Component", Interaction, Groups, Tuple[str]], Coroutine[Any, Any, Any]]  # type: ignore
+    GridCheck = Callable[["Grid", "Component", Interaction, Groups, Tuple[str]], Coroutine[Any, Any, Any]]  # type: ignore
 
     BC = TypeVar("BC", bound=ButtonCheck)
     SC = TypeVar("SC", bound=SelectMenuCheck)
     GC = TypeVar("GC", bound=GridCheck)
     CH = TypeVar("CH", bound="Component")
+    B = TypeVar("B", bound=Bot)
 
 Component = Union["Button", "SelectMenu"]
 AllComponents = Union["ActionRow", Component]
@@ -134,26 +147,28 @@ class Button:
     def __init_subclass__(cls, *, checks: Missing[List[ButtonCheck]] = MISSING) -> None:
         cls.checks = checks or []
 
-    async def run_component(self, interaction: Interaction) -> None:
+    async def run_component(self, interaction: Interaction, groups: Groups) -> None:
         if self.grid is not None:
             for check in self.grid.checks:
                 try:
-                    if not await check(self.grid, self, interaction, tuple()):
+                    if not await check(self.grid, self, interaction, groups, tuple()):
                         return
                 except Exception as e:
                     return await self.on_check_error(interaction, e)
         for check in self.checks:
             try:
-                if not await check(self, interaction):
+                if not await check(self, interaction, groups):
                     return
             except Exception as e:
                 return await self.on_check_error(interaction, e)
         try:
-            await self.callback(interaction)
+            await self.callback(interaction, groups)
         except Exception as e:
             return await self.on_error(interaction, e)
 
-    async def callback(self, interaction: Interaction) -> Any:
+    async def callback(
+        self, interaction: Interaction, groups: Missing[Dict[str, str]]
+    ) -> Any:
         ...
 
     def to_payload(self) -> ButtonData:
@@ -243,7 +258,7 @@ class SelectMenu:
     ) -> None:
         cls.checks = checks or []
 
-    async def run_component(self, interaction: Interaction) -> None:
+    async def run_component(self, interaction: Interaction, groups: Groups) -> None:
         # type: ignore to save using .get, if an interaction gets here
         # it will have values or there should be an error since the user
         # messed with something incorrectly
@@ -251,13 +266,13 @@ class SelectMenu:
         if self.grid is not None:
             for check in self.grid.checks:
                 try:
-                    if not await check(self.grid, self, interaction, values):
+                    if not await check(self.grid, self, interaction, groups, values):
                         return
                 except Exception as e:
                     return await self.on_check_error(interaction, values, e)
         for check in self.checks:
             try:
-                if not await check(self, interaction, values):
+                if not await check(self, interaction, groups, values):
                     return
             except Exception as e:
                 return await self.on_check_error(interaction, values, e)
@@ -366,6 +381,11 @@ class Grid:
                     j.append(i)
                     break
         return [ActionRow(*i).to_payload() for i in rows]
+
+    def store(self, bot: B) -> B:
+        for i in self.components:
+            bot.add_component(i)
+        return bot
 
 
 class SelectOption:

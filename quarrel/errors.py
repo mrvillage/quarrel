@@ -78,13 +78,19 @@ class MethodNotAllowed(HTTPException):
 class ServerError(HTTPException):
     ...
 
+
 class GatewayError(QuarrelException):
     ...
 
+
 class InvalidSessionError(GatewayError):
     ...
+
+
 class CommandError(QuarrelException):
     ...
+
+
 class ConversionError(CommandError):
     def __init__(self, option: Option, value: Any, errors: List[Exception]) -> None:
         self.option: Option = option

@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Union
 
 from .. import utils
@@ -96,6 +97,7 @@ class Button:
         "url",
         "disabled",
         "row",
+        "pattern",
         "grid",
     )
 
@@ -109,6 +111,7 @@ class Button:
         url: Missing[str] = MISSING,
         disabled: Missing[bool] = MISSING,
         row: Missing[int] = MISSING,
+        pattern: Missing[str] = MISSING,
     ) -> None:
         if custom_id is not MISSING and url is not MISSING:
             raise ValueError("Cannot specify both custom_id and url")
@@ -123,6 +126,9 @@ class Button:
         self.url: Missing[str] = url
         self.disabled: Missing[bool] = disabled
         self.row: Missing[int] = row
+        self.pattern: Missing[re.Pattern[str]] = (
+            pattern if pattern is MISSING else re.compile(pattern)
+        )
         self.grid: Optional[Grid] = None
 
     def __init_subclass__(cls, *, checks: Missing[List[ButtonCheck]] = MISSING) -> None:
@@ -204,6 +210,7 @@ class SelectMenu:
         "max_values",
         "disabled",
         "row",
+        "pattern",
         "grid",
     )
 
@@ -217,6 +224,7 @@ class SelectMenu:
         max_values: Missing[int] = MISSING,
         disabled: Missing[bool] = MISSING,
         row: Missing[int] = MISSING,
+        pattern: Missing[str] = MISSING,
     ) -> None:
         self.custom_id: str = custom_id or utils.generate_custom_id(100)
         self.options: List[SelectOption] = options or []
@@ -225,6 +233,9 @@ class SelectMenu:
         self.max_values: Missing[int] = max_values
         self.disabled: Missing[bool] = disabled
         self.row: Missing[int] = row
+        self.pattern: Missing[re.Pattern[str]] = (
+            pattern if pattern is MISSING else re.compile(pattern)
+        )
         self.grid: Optional[Grid] = None
 
     def __init_subclass__(

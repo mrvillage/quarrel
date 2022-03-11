@@ -64,27 +64,23 @@ if TYPE_CHECKING:
     from ..types.interactions import PartialApplicationCommand as ApplicationCommandData
     from .interaction import Interaction
 
-    SlashCommandCheck = Callable[
-        ["SlashCommand", Interaction, Any], Coroutine[Any, Any, Any]
-    ]
+    SlashCommandCheck = Callable[["SlashCommand"], Coroutine[Any, Any, Any]]
     UserCommandCheck = Callable[
-        ["UserCommand", Interaction, Union[User, Member]],
+        ["UserCommand"],
         Coroutine[Any, Any, Any],
     ]
-    MessageCommandCheck = Callable[
-        ["MessageCommand", Interaction, Message], Coroutine[Any, Any, Any]
-    ]
+    MessageCommandCheck = Callable[["MessageCommand"], Coroutine[Any, Any, Any]]
 
     SCC = TypeVar("SCC", bound=SlashCommandCheck)
     UCC = TypeVar("UCC", bound=UserCommandCheck)
     MCC = TypeVar("MCC", bound=MessageCommandCheck)
     OptionType = Union["Option", "Type[SlashCommand]"]
     NO = TypeVar("NO", bound=Any)
-    Converter = Callable[[Interaction, Any, Any], Coroutine[Any, Any, Any]]
+    Converter = Callable[["SlashCommand", Any], Coroutine[Any, Any, Any]]
     OptionDefault = Union[
         Any,
-        Callable[[Interaction, Any], Coroutine[Any, Any, Any]],
-        Callable[[Interaction, Any], Any],
+        Callable[["SlashCommand"], Coroutine[Any, Any, Any]],
+        Callable[["SlashCommand"], Any],
     ]
 
 ApplicationCommand = Union["SlashCommand", "UserCommand", "MessageCommand"]
@@ -118,11 +114,15 @@ class SlashCommand:
     description: str
     guilds: List[int]
     global_: bool
-    options: List[OptionType]
+    command_options: List[OptionType]
     parent: Optional[Type[SlashCommand]]
     checks: List[SlashCommandCheck]
 
-    __slots__ = ()
+    __slots__ = ("interaction", "options")
+
+    def __init__(self, interaction: Interaction, options: Any) -> None:
+        self.interaction: Interaction = interaction
+        self.options: Any = options
 
     def __init_subclass__(
         cls,
@@ -136,13 +136,13 @@ class SlashCommand:
     ) -> None:
         cls.name = name or ""
         cls.description = description or ""
-        cls.options = [j for i in cls.__mro__ for j in getattr(i, "options", [])] + (
-            options or []
-        )
+        cls.command_options = [
+            j for i in cls.__mro__ for j in getattr(i, "options", [])
+        ] + (options or [])
         # pyright has issues unpacking Unions with Type inside
         cls.parent = parent or None  # type: ignore
         if cls.parent is not None:
-            cls.parent.options.append(cls)
+            cls.parent.command_options.append(cls)
         cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
             checks or []
         )
@@ -156,13 +156,16 @@ class SlashCommand:
         cls, interaction: Interaction, options_: Missing[List[OptionType]] = MISSING
     ) -> None:
         options_ = options_ or interaction.data.get("options", [])  # type: ignore
-        if cls.options and cls.options[0].type is ApplicationCommandType.CHAT_INPUT:
-            parameters: Dict[str, SlashCommand] = {i.name: i for i in cls.options}  # type: ignore
+        if (
+            cls.command_options
+            and cls.command_options[0].type is ApplicationCommandType.CHAT_INPUT
+        ):
+            parameters: Dict[str, SlashCommand] = {i.name: i for i in cls.command_options}  # type: ignore
             await parameters[options_[0]["name"]].run_command(interaction, options_[0].get("options", []))  # type: ignore
-        self = cls()
-        arguments: Dict[str, OptionData] = {i.name: i for i in options_}  # type: ignore
-        parameters: Dict[str, Option] = {i.name: i for i in cls.options}  # type: ignore
         options = Options()
+        self = cls(interaction, options)
+        arguments: Dict[str, OptionData] = {i.name: i for i in options_}  # type: ignore
+        parameters: Dict[str, Option] = {i.name: i for i in cls.command_options}  # type: ignore
         for check in cls.checks:
             requires: List[str] = getattr(check, "__check_requires__", [])
             for name in requires:
@@ -175,25 +178,23 @@ class SlashCommand:
                         default = option.default
                         if callable(default):
                             if asyncio.iscoroutinefunction(default):
-                                default = await default(interaction, options)
+                                default = await default(self)
                             else:
-                                default = default(interaction, options)
+                                default = default(self)
                         setattr(options, name, default)
                     else:
                         setattr(
                             options,
                             name,
-                            await option.parse(interaction, options, value),
+                            await option.parse(self, value),
                         )
                 except Exception as e:
-                    return await self.on_option_error(
-                        interaction, options, e, option, value
-                    )
+                    return await self.on_option_error(e, option, value)
             try:
-                if not await check(self, interaction, options):
+                if not await check(self):
                     return
             except Exception as e:
-                return await self.on_check_error(interaction, options, e)
+                return await self.on_check_error(e)
         for name, param in parameters.items():
             if hasattr(options, name):
                 continue
@@ -202,28 +203,28 @@ class SlashCommand:
                 if value is MISSING:
                     default = param.default
                     if callable(default):
-                        default = await default(interaction, options)
-                    else:
-                        setattr(options, name, default)
+                        if asyncio.iscoroutinefunction(default):
+                            default = await default(self)
+                        else:
+                            default = default(self)
+                    setattr(options, name, default)
                 else:
                     setattr(
                         options,
                         name,
-                        await param.parse(interaction, options, value),
+                        await param.parse(self, value),
                     )
             except Exception as e:
-                return await self.on_option_error(interaction, options, e, param, value)
+                return await self.on_option_error(e, param, value)
         try:
-            await self.callback(interaction, options)
+            await self.callback()
         except Exception as e:
-            return await self.on_error(interaction, options, e)
+            return await self.on_error(e)
 
-    async def callback(self, interaction: Interaction, options: Any) -> Any:
+    async def callback(self) -> Any:
         ...
 
-    async def on_error(
-        self, interaction: Interaction, options: Any, error: Exception
-    ) -> None:
+    async def on_error(self, error: Exception) -> None:
         if isinstance(error, CheckError):
             utils.print_exception_with_header(
                 f"Ignoring exception in check of command {self.name}:", error.error
@@ -250,24 +251,20 @@ class SlashCommand:
 
     async def on_option_error(
         self,
-        interaction: Interaction,
-        options: Any,
         error: Exception,
         option: Option,
         value: Missing[Any],
     ) -> None:
-        await self.on_error(interaction, options, OptionError(option, value, error))
+        await self.on_error(OptionError(option, value, error))
 
-    async def on_check_error(
-        self, interaction: Interaction, options: Any, error: Exception
-    ) -> None:
-        await self.on_error(interaction, options, CheckError(error))
+    async def on_check_error(self, error: Exception) -> None:
+        await self.on_error(CheckError(error))
 
     @classmethod
     def to_payload(cls) -> ApplicationCommandData:
         if not cls.name or not cls.description:
             raise ValueError("Command must have a name and description")
-        options = [option.to_payload() for option in cls.options]
+        options = [option.to_payload() for option in cls.command_options]
         return {
             "name": cls.name,
             "description": cls.description,
@@ -322,7 +319,11 @@ class UserCommand:
     global_: bool
     checks: List[UserCommandCheck]
 
-    __slots__ = ()
+    __slots__ = ("interaction", "user")
+
+    def __init__(self, interaction: Interaction, user: Union[User, Member]) -> None:
+        self.interaction: Interaction = interaction
+        self.user: Union[User, Member] = user
 
     def __init_subclass__(
         cls,
@@ -342,26 +343,24 @@ class UserCommand:
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
-        self = cls()
         # for performance, just using type: ignore instead
         # of checks since the Member or User will be present
         user = interaction.get_member_from_resolved(interaction.target_id)  # type: ignore
-        for check in cls.checks:
-            try:
-                if not await check(self, interaction, user):
-                    return
-            except Exception as e:
-                return await self.on_check_error(interaction, user, e)
         if user is None:
             user: User = interaction.get_user_from_resolved(interaction.target_id)  # type: ignore
+        self = cls(interaction, user)
+        for check in cls.checks:
+            try:
+                if not await check(self):
+                    return
+            except Exception as e:
+                return await self.on_check_error(e)
         try:
-            await self.callback(interaction, user)
+            await self.callback()
         except Exception as e:
-            return await self.on_error(interaction, user, e)
+            return await self.on_error(e)
 
-    async def callback(
-        self, interaction: Interaction, user: Union[User, Member]
-    ) -> Any:
+    async def callback(self) -> Any:
         ...
 
     @classmethod
@@ -374,9 +373,7 @@ class UserCommand:
             "type": cls.type.value,
         }
 
-    async def on_error(
-        self, interaction: Interaction, user: User, error: Exception
-    ) -> None:
+    async def on_error(self, error: Exception) -> None:
         if isinstance(error, CheckError):
             utils.print_exception_with_header(
                 f"Ignoring exception in check of command {self.name}:", error.error
@@ -386,10 +383,8 @@ class UserCommand:
                 f"Ignoring exception in command {self.name}:", error
             )
 
-    async def on_check_error(
-        self, interaction: Interaction, user: User, error: Exception
-    ) -> None:
-        await self.on_error(interaction, user, CheckError(error))
+    async def on_check_error(self, error: Exception) -> None:
+        await self.on_error(CheckError(error))
 
     @classmethod
     def add_check(cls, func: UserCommandCheck) -> Type[ApplicationCommand]:
@@ -414,7 +409,11 @@ class MessageCommand:
     global_: bool
     checks: List[MessageCommandCheck]
 
-    __slots__ = ()
+    __slots__ = ("interaction", "message")
+
+    def __init__(self, interaction: Interaction, message: Message) -> None:
+        self.interaction: Interaction = interaction
+        self.message: Message = message
 
     def __init_subclass__(
         cls,
@@ -434,22 +433,22 @@ class MessageCommand:
 
     @classmethod
     async def run_command(cls, interaction: Interaction) -> None:
-        self = cls()
         # for performance, just using type: ignore instead
         # of checks since the Message will be present
         message: Message = interaction.get_message_from_resolved(interaction.target_id)  # type: ignore
+        self = cls(interaction, message)
         for check in cls.checks:
             try:
-                if not await check(self, interaction, message):
+                if not await check(self):
                     return
             except Exception as e:
-                return await self.on_check_error(interaction, message, e)
+                return await self.on_check_error(e)
         try:
-            await self.callback(interaction, message)
+            await self.callback()
         except Exception as e:
-            return await self.on_error(interaction, message, e)
+            return await self.on_error(e)
 
-    async def callback(self, interaction: Interaction, message: Message) -> Any:
+    async def callback(self) -> Any:
         ...
 
     @classmethod
@@ -462,9 +461,7 @@ class MessageCommand:
             "type": cls.type.value,
         }
 
-    async def on_error(
-        self, interaction: Interaction, message: Message, error: Exception
-    ) -> None:
+    async def on_error(self, error: Exception) -> None:
         if isinstance(error, CheckError):
             utils.print_exception_with_header(
                 f"Ignoring exception in check of command {self.name}:", error.error
@@ -474,10 +471,8 @@ class MessageCommand:
                 f"Ignoring exception in command {self.name}:", error
             )
 
-    async def on_check_error(
-        self, interaction: Interaction, message: Message, error: Exception
-    ) -> None:
-        await self.on_error(interaction, message, CheckError(error))
+    async def on_check_error(self, error: Exception) -> None:
+        await self.on_error(CheckError(error))
 
     @classmethod
     def add_check(cls, func: MessageCommandCheck) -> Type[ApplicationCommand]:
@@ -545,9 +540,7 @@ class Option:
         self.max_value: Missing[float] = max_value
         self.autocomplete: Missing[bool] = autocomplete
 
-    async def autocomplete_callback(
-        self, interaction: Interaction, options: Any
-    ) -> Any:
+    async def autocomplete_callback(self, command: SlashCommand) -> Any:
         ...
 
     def to_payload(self) -> OptionData:
@@ -574,7 +567,8 @@ class Option:
             payload["autocomplete"] = self.autocomplete
         return payload
 
-    async def parse(self, interaction: Interaction, options: Any, value: Any) -> Any:
+    async def parse(self, command: SlashCommand, value: Any) -> Any:
+        interaction = command.interaction
         if self.type is ApplicationCommandOptionType.MENTIONABLE:
             id = int(value)
             if interaction.guild_id is not MISSING:
@@ -602,7 +596,7 @@ class Option:
             errors: List[Exception] = []
             for converter in self.converters:
                 try:
-                    return await converter(interaction, options, value)
+                    return await converter(command, value)
                 except Exception as e:
                     errors.append(e)
             raise ConversionError(self, value, errors)

@@ -64,7 +64,7 @@ if TYPE_CHECKING:
     from .interaction import Interaction
 
     SlashCommandCheck = Callable[
-        ["SlashCommand", Interaction, "Options"], Coroutine[Any, Any, Any]
+        ["SlashCommand", Interaction, "Any"], Coroutine[Any, Any, Any]
     ]
     UserCommandCheck = Callable[
         ["UserCommand", Interaction, Union[User, Member]],
@@ -78,8 +78,8 @@ if TYPE_CHECKING:
     UCC = TypeVar("UCC", bound=UserCommandCheck)
     MCC = TypeVar("MCC", bound=MessageCommandCheck)
     OptionType = Union["Option", "Type[SlashCommand]"]
-    NO = TypeVar("NO", bound="Options")
-    Converter = Callable[[Interaction, "Options", Any], Coroutine[Any, Any, Any]]
+    NO = TypeVar("NO", bound="Any")
+    Converter = Callable[[Interaction, "Any", Any], Coroutine[Any, Any, Any]]
 
 ApplicationCommand = Union["SlashCommand", "UserCommand", "MessageCommand"]
 
@@ -210,11 +210,11 @@ class SlashCommand:
         except Exception as e:
             return await self.on_error(interaction, options, e)
 
-    async def callback(self, interaction: Interaction, options: Options) -> Any:
+    async def callback(self, interaction: Interaction, options: Any) -> Any:
         ...
 
     async def on_error(
-        self, interaction: Interaction, options: Options, error: Exception
+        self, interaction: Interaction, options: Any, error: Exception
     ) -> None:
         if isinstance(error, CheckError):
             utils.print_exception_with_header(
@@ -243,7 +243,7 @@ class SlashCommand:
     async def on_option_error(
         self,
         interaction: Interaction,
-        options: Options,
+        options: Any,
         error: Exception,
         option: Option,
         value: Missing[Any],
@@ -251,7 +251,7 @@ class SlashCommand:
         await self.on_error(interaction, options, OptionError(option, value, error))
 
     async def on_check_error(
-        self, interaction: Interaction, options: Options, error: Exception
+        self, interaction: Interaction, options: Any, error: Exception
     ) -> None:
         await self.on_error(interaction, options, CheckError(error))
 
@@ -538,7 +538,7 @@ class Option:
         self.autocomplete: Missing[bool] = autocomplete
 
     async def autocomplete_callback(
-        self, interaction: Interaction, options: Options
+        self, interaction: Interaction, options: Any
     ) -> Any:
         ...
 
@@ -566,9 +566,7 @@ class Option:
             payload["autocomplete"] = self.autocomplete
         return payload
 
-    async def parse(
-        self, interaction: Interaction, options: Options, value: Any
-    ) -> Any:
+    async def parse(self, interaction: Interaction, options: Any, value: Any) -> Any:
         if self.type is ApplicationCommandOptionType.MENTIONABLE:
             id = int(value)
             if interaction.guild_id is not MISSING:

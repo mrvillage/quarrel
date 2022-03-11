@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING, Union
 
 from .. import utils
@@ -64,7 +65,7 @@ if TYPE_CHECKING:
     from .interaction import Interaction
 
     SlashCommandCheck = Callable[
-        ["SlashCommand", Interaction, "Any"], Coroutine[Any, Any, Any]
+        ["SlashCommand", Interaction, Any], Coroutine[Any, Any, Any]
     ]
     UserCommandCheck = Callable[
         ["UserCommand", Interaction, Union[User, Member]],
@@ -78,8 +79,13 @@ if TYPE_CHECKING:
     UCC = TypeVar("UCC", bound=UserCommandCheck)
     MCC = TypeVar("MCC", bound=MessageCommandCheck)
     OptionType = Union["Option", "Type[SlashCommand]"]
-    NO = TypeVar("NO", bound="Any")
-    Converter = Callable[[Interaction, "Any", Any], Coroutine[Any, Any, Any]]
+    NO = TypeVar("NO", bound=Any)
+    Converter = Callable[[Interaction, Any, Any], Coroutine[Any, Any, Any]]
+    OptionDefault = Union[
+        Any,
+        Callable[[Interaction, Any], Coroutine[Any, Any, Any]],
+        Callable[[Interaction, Any], Any],
+    ]
 
 ApplicationCommand = Union["SlashCommand", "UserCommand", "MessageCommand"]
 
@@ -168,9 +174,11 @@ class SlashCommand:
                     if value is MISSING:
                         default = option.default
                         if callable(default):
-                            default = await default(interaction, options)
-                        else:
-                            setattr(options, name, default)
+                            if asyncio.iscoroutinefunction(default):
+                                default = await default(interaction, options)
+                            else:
+                                default = default(interaction, options)
+                        setattr(options, name, default)
                     else:
                         setattr(
                             options,
@@ -508,7 +516,7 @@ class Option:
         description: str,
         converter: Missing[Converter] = MISSING,
         converters: Missing[List[Converter]] = MISSING,
-        default: Any = MISSING,
+        default: OptionDefault = MISSING,
         choices: Missing[EnumMeta] = MISSING,
         channel_types: Missing[Sequence[ChannelType]] = MISSING,
         min_value: Missing[float] = MISSING,
@@ -530,7 +538,7 @@ class Option:
             [converter] if converter is not MISSING else converters
         ) or []
 
-        self.default: Any = default
+        self.default: OptionDefault = default
         self.choices: Missing[EnumMeta] = choices
         self.channel_types: Missing[Sequence[ChannelType]] = channel_types
         self.min_value: Missing[float] = min_value

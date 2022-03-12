@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Generic, Union
 
 from .. import utils
 from ..enums import ApplicationCommandOptionType, ApplicationCommandType
@@ -64,26 +64,27 @@ if TYPE_CHECKING:
     from ..types.interactions import PartialApplicationCommand as ApplicationCommandData
     from .interaction import Interaction
 
-    SlashCommandCheck = Callable[["SlashCommand"], Coroutine[Any, Any, Any]]
+    SlashCommandCheck = Callable[["SlashCommand[OPTS]"], Coroutine[Any, Any, Any]]
     UserCommandCheck = Callable[
         ["UserCommand"],
         Coroutine[Any, Any, Any],
     ]
     MessageCommandCheck = Callable[["MessageCommand"], Coroutine[Any, Any, Any]]
 
-    SCC = TypeVar("SCC", bound=SlashCommandCheck)
+    SCC = TypeVar("SCC", bound=SlashCommandCheck[Any])
     UCC = TypeVar("UCC", bound=UserCommandCheck)
     MCC = TypeVar("MCC", bound=MessageCommandCheck)
-    OptionType = Union["Option", "Type[SlashCommand]"]
+    OptionType = Union["Option", "Type[SlashCommand[OPTS]]"]
     NO = TypeVar("NO", bound=Any)
-    Converter = Callable[["SlashCommand", Any], Coroutine[Any, Any, Any]]
+    Converter = Callable[["SlashCommand[OPTS]", Any], Coroutine[Any, Any, Any]]
     OptionDefault = Union[
         Any,
-        Callable[["SlashCommand"], Coroutine[Any, Any, Any]],
-        Callable[["SlashCommand"], Any],
+        Callable[["SlashCommand[OPTS]"], Coroutine[Any, Any, Any]],
+        Callable[["SlashCommand[OPTS]"], Any],
     ]
+    OPTS = TypeVar("OPTS")
 
-ApplicationCommand = Union["SlashCommand", "UserCommand", "MessageCommand"]
+ApplicationCommand = Union["SlashCommand[OPTS]", "UserCommand", "MessageCommand"]
 
 
 def check(
@@ -108,29 +109,29 @@ def check(
     return decorator
 
 
-class SlashCommand:
+class SlashCommand(Generic[OPTS]):
     type: Final = ApplicationCommandType.CHAT_INPUT
     name: str
     description: str
     guilds: List[int]
     global_: bool
-    command_options: List[OptionType]
-    parent: Optional[Type[SlashCommand]]
-    checks: List[SlashCommandCheck]
+    command_options: List[OptionType[OPTS]]
+    parent: Optional[Type[SlashCommand[OPTS]]]
+    checks: List[SlashCommandCheck[OPTS]]
 
     __slots__ = ("interaction", "options")
 
-    def __init__(self, interaction: Interaction, options: Any) -> None:
+    def __init__(self, interaction: Interaction, options: OPTS) -> None:
         self.interaction: Interaction = interaction
-        self.options: Any = options
+        self.options: OPTS = options
 
     def __init_subclass__(
         cls,
         name: Missing[str] = MISSING,
         description: Missing[str] = MISSING,
-        options: Missing[List[OptionType]] = MISSING,
-        parent: Missing[Type[SlashCommand]] = MISSING,
-        checks: Missing[List[SlashCommandCheck]] = MISSING,
+        options: Missing[List[OptionType[OPTS]]] = MISSING,
+        parent: Missing[Type[SlashCommand[OPTS]]] = MISSING,
+        checks: Missing[List[SlashCommandCheck[OPTS]]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
@@ -153,7 +154,9 @@ class SlashCommand:
 
     @classmethod
     async def run_command(
-        cls, interaction: Interaction, options_: Missing[List[OptionType]] = MISSING
+        cls,
+        interaction: Interaction,
+        options_: Missing[List[OptionType[OPTS]]] = MISSING,
     ) -> None:
         options_ = options_ or interaction.data.get("options", [])  # type: ignore
         if (
@@ -282,11 +285,11 @@ class SlashCommand:
     @classmethod
     def add_check(
         cls,
-        func: SlashCommandCheck,
+        func: SlashCommandCheck[OPTS],
         *,
         requires: Missing[Union[str, List[str]]] = MISSING,
         after_options: bool = True,
-    ) -> Type[ApplicationCommand]:
+    ) -> Type[ApplicationCommand[OPTS]]:
         if requires is MISSING:
             requires = []
         elif isinstance(requires, str):
@@ -387,7 +390,7 @@ class UserCommand:
         await self.on_error(CheckError(error))
 
     @classmethod
-    def add_check(cls, func: UserCommandCheck) -> Type[ApplicationCommand]:
+    def add_check(cls, func: UserCommandCheck) -> Type[ApplicationCommand[OPTS]]:
         cls.checks.append(func)
         return cls
 
@@ -475,7 +478,7 @@ class MessageCommand:
         await self.on_error(CheckError(error))
 
     @classmethod
-    def add_check(cls, func: MessageCommandCheck) -> Type[ApplicationCommand]:
+    def add_check(cls, func: MessageCommandCheck) -> Type[ApplicationCommand[OPTS]]:
         cls.checks.append(func)
         return cls
 
@@ -509,9 +512,9 @@ class Option:
         type: ApplicationCommandOptionType,
         name: str,
         description: str,
-        converter: Missing[Converter] = MISSING,
-        converters: Missing[List[Converter]] = MISSING,
-        default: OptionDefault = MISSING,
+        converter: Missing[Converter[OPTS]] = MISSING,
+        converters: Missing[List[Converter[OPTS]]] = MISSING,
+        default: OptionDefault[OPTS] = MISSING,
         choices: Missing[EnumMeta] = MISSING,
         channel_types: Missing[Sequence[ChannelType]] = MISSING,
         min_value: Missing[float] = MISSING,
@@ -529,18 +532,18 @@ class Option:
             )
         if converter is not MISSING and converters is not MISSING:
             raise ValueError("Only one of converter and converters can be specified")
-        self.converters: List[Converter] = (
+        self.converters: List[Converter[OPTS]] = (
             [converter] if converter is not MISSING else converters
         ) or []
 
-        self.default: OptionDefault = default
+        self.default: OptionDefault[OPTS] = default
         self.choices: Missing[EnumMeta] = choices
         self.channel_types: Missing[Sequence[ChannelType]] = channel_types
         self.min_value: Missing[float] = min_value
         self.max_value: Missing[float] = max_value
         self.autocomplete: Missing[bool] = autocomplete
 
-    async def autocomplete_callback(self, command: SlashCommand) -> Any:
+    async def autocomplete_callback(self, command: SlashCommand[Any]) -> Any:
         ...
 
     def to_payload(self) -> OptionData:
@@ -567,7 +570,7 @@ class Option:
             payload["autocomplete"] = self.autocomplete
         return payload
 
-    async def parse(self, command: SlashCommand, value: Any) -> Any:
+    async def parse(self, command: SlashCommand[Any], value: Any) -> Any:
         interaction = command.interaction
         if self.type is ApplicationCommandOptionType.MENTIONABLE:
             id = int(value)

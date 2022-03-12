@@ -82,7 +82,8 @@ if TYPE_CHECKING:
         Callable[["SlashCommand[OPTS]"], Coroutine[Any, Any, Any]],
         Callable[["SlashCommand[OPTS]"], Any],
     ]
-    OPTS = TypeVar("OPTS")
+
+OPTS = TypeVar("OPTS")
 
 ApplicationCommand = Union["SlashCommand[OPTS]", "UserCommand", "MessageCommand"]
 

@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     )
 
     CoroutineFunction = Callable[..., Coroutine[Any, Any, Any]]
-    AC = TypeVar("AC", bound=Type[ApplicationCommand])
+    AC = TypeVar("AC", bound=Type[ApplicationCommand[Any]])
     CF = TypeVar("CF", bound=CoroutineFunction)
     C = TypeVar("C", bound=Component)
 
@@ -77,8 +77,8 @@ class Bot:
         self.listeners: Dict[str, Set[CoroutineFunction]] = {}
         self.state: State = State(self)
         self.user: Missing[User] = MISSING
-        self.commands: Set[Type[ApplicationCommand]] = set()
-        self.registered_commands: Dict[int, Type[ApplicationCommand]] = {}
+        self.commands: Set[Type[ApplicationCommand[Any]]] = set()
+        self.registered_commands: Dict[int, Type[ApplicationCommand[Any]]] = {}
         self.components: Dict[str, Component] = {}
         self.regex_components: Dict[re.Pattern[str], Component] = {}
 
@@ -161,7 +161,7 @@ class Bot:
         self.add_command(command)
         return command
 
-    def add_command(self, command: Type[ApplicationCommand]) -> Bot:
+    def add_command(self, command: Type[ApplicationCommand[Any]]) -> Bot:
         self.commands.add(command)
         return self
 
@@ -184,7 +184,7 @@ class Bot:
             )
             for command in registered:
                 self.registered_commands[int(command["id"])] = commands[command["name"]]
-        guild_commands: Dict[int, List[Type[ApplicationCommand]]] = {}
+        guild_commands: Dict[int, List[Type[ApplicationCommand[Any]]]] = {}
         for command in self.commands:
             for guild in command.guilds:
                 if (commands_ := guild_commands.get(guild)) is None:

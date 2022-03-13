@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Generic, Union
+from typing import TYPE_CHECKING, Generic, TypeVar, Union
 
 from .. import utils
 from ..enums import ApplicationCommandOptionType, ApplicationCommandType
@@ -53,7 +53,6 @@ if TYPE_CHECKING:
         Optional,
         Sequence,
         Type,
-        TypeVar,
         cast,
     )
 

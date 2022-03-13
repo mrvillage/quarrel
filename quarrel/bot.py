@@ -59,6 +59,13 @@ if TYPE_CHECKING:
     C = TypeVar("C", bound=Component)
 
 
+def _get_event_loop() -> asyncio.AbstractEventLoop:
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.get_event_loop_policy().get_event_loop()
+
+
 class Bot:
     def __init__(
         self,
@@ -71,7 +78,7 @@ class Bot:
         self.token: str = token
         self.intents: Intents = intents
 
-        self.loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
+        self.loop: asyncio.AbstractEventLoop = loop or _get_event_loop()
         self.session: aiohttp.ClientSession = aiohttp.ClientSession()
         self.http: HTTP = HTTP(self.session, token, self.application_id, self.loop)
         self.listeners: Dict[str, Set[CoroutineFunction]] = {}

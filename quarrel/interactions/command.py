@@ -138,7 +138,7 @@ class SlashCommand(Generic[OPTS]):
         cls.name = name or ""
         cls.description = description or ""
         cls.command_options = [
-            j for i in cls.__mro__ for j in getattr(i, "options", [])
+            j for i in cls.__mro__ for j in getattr(i, "command_options", [])
         ] + (options or [])
         # pyright has issues unpacking Unions with Type inside
         cls.parent = parent or None  # type: ignore

@@ -524,12 +524,6 @@ class Option:
         self.type: ApplicationCommandOptionType = type
         self.name: str = name
         self.description: str = description
-        if (
-            converter is not MISSING or converters is not MISSING
-        ) and type is not ApplicationCommandOptionType.STRING:
-            raise ValueError(
-                "The converter and converters arguments are only valid for the STRING option type"
-            )
         if converter is not MISSING and converters is not MISSING:
             raise ValueError("Only one of converter and converters can be specified")
         self.converters: List[Converter[OPTS]] = (

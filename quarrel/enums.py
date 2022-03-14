@@ -35,6 +35,7 @@ __all__ = (
     "GuildPremiumTier",
     "StickerType",
     "StickerFormat",
+    "ChannelType",
     "ApplicationCommandOptionType",
     "ApplicationCommandType",
     "InteractionType",

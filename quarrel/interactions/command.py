@@ -546,7 +546,7 @@ class Option:
             "name": self.name,
             "description": self.description,
         }
-        if self.default is not MISSING:
+        if self.default is MISSING:
             payload["required"] = True
         if self.choices is not MISSING:
             if TYPE_CHECKING:

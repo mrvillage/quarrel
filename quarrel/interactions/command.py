@@ -147,7 +147,7 @@ class SlashCommand(Generic[OPTS]):
         cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
             checks or []
         )
-        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "guilds", [])] + (
             guilds or []
         )
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
@@ -339,7 +339,7 @@ class UserCommand:
         cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
             checks or []
         )
-        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "guilds", [])] + (
             guilds or []
         )
         cls.global_ = global_ if global_ is not MISSING else not guilds
@@ -429,7 +429,7 @@ class MessageCommand:
         cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
             checks or []
         )
-        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
+        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "guilds", [])] + (
             guilds or []
         )
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)

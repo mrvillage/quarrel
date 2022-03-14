@@ -70,11 +70,9 @@ class EventHandler:
         elif event == "RESUMED":
             ...
 
-        try:
-            self.handlers[event](data)
-        # unknown event
-        except KeyError:
-            pass
+        handler = self.handlers.get(event)
+        if handler is not None:
+            handler(data)
 
     def handle_ready(self, data: Dict[str, Any]) -> None:
         self.bot.user = User(data["user"], self.state)
@@ -89,7 +87,6 @@ class EventHandler:
         num_guilds = len(data.get("guilds", []))
         queue = self.guild_queue
         guilds: List[Guild] = []
-        chunkers: List[asyncio.Task[Any]] = []
 
         while True:
             try:
@@ -97,7 +94,7 @@ class EventHandler:
             except asyncio.TimeoutError:
                 break
             if self.chunk_guilds:
-                chunkers.append(asyncio.create_task(guild.chunk()))
+                asyncio.create_task(guild.chunk())
             guilds.append(guild)
             if len(guilds) == num_guilds:
                 break

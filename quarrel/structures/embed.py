@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..enums import Color
 from ..missing import MISSING
 
 __all__ = (
@@ -43,7 +44,6 @@ if TYPE_CHECKING:
     import datetime
     from typing import List, Union
 
-    from ..enums import Color
     from ..missing import Missing
     from ..types.embed import Embed as EmbedData
     from ..types.embed import EmbedAuthor as EmbedAuthorData

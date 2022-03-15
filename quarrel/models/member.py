@@ -77,10 +77,13 @@ class Member:
 
         self.update(data)
 
-    def update(self, data: Union[MemberData, MemberWithUser]) -> Member:
+    def update(
+        self, data: Union[MemberData, MemberWithUser], partial: bool = False
+    ) -> Member:
         self.joined_at: str = data["joined_at"]
-        self.deaf: bool = data["deaf"]
-        self.mute: bool = data["mute"]
+        if not partial:
+            self.deaf: bool = data["deaf"]
+            self.mute: bool = data["mute"]
 
         self.nickname: Missing[Optional[str]] = data.get("nick", MISSING)
         avatar = data.get("avatar", MISSING)

@@ -167,7 +167,7 @@ class SlashCommand(Generic[OPTS]):
             await parameters[options_[0]["name"]].run_command(interaction, options_[0].get("options", []))  # type: ignore
         options = Options()
         self = cls(interaction, options)
-        arguments: Dict[str, OptionData] = {i.name: i for i in options_}  # type: ignore
+        arguments: Dict[str, Any] = {i["name"]: i for i in options_}  # type: ignore
         parameters: Dict[str, Option] = {i.name: i for i in cls.command_options}  # type: ignore
         for check in cls.checks:
             requires: List[str] = getattr(check, "__check_requires__", [])
@@ -189,7 +189,7 @@ class SlashCommand(Generic[OPTS]):
                         setattr(
                             options,
                             name,
-                            await option.parse(self, value),
+                            await option.parse(self, value["value"]),
                         )
                 except Exception as e:
                     return await self.on_option_error(e, option, value)
@@ -215,7 +215,7 @@ class SlashCommand(Generic[OPTS]):
                     setattr(
                         options,
                         name,
-                        await param.parse(self, value),
+                        await param.parse(self, value["value"]),
                     )
             except Exception as e:
                 return await self.on_option_error(e, param, value)

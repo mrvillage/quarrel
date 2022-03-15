@@ -84,3 +84,7 @@ class User:
         return self.avatar or Asset.default_user_avatar(
             int(self.discriminator), http=self._state.bot.http
         )
+
+    @property
+    def mention(self) -> str:
+        return f"<@{self.id}>"

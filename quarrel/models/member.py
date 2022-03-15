@@ -115,3 +115,7 @@ class Member:
     @property
     def display_avatar(self) -> Asset:
         return self.avatar or self.user.display_avatar
+
+    @property
+    def mention(self) -> str:
+        return f"<@{self.id}>"

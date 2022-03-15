@@ -41,8 +41,9 @@ __all__ = (
 
 if TYPE_CHECKING:
     import datetime
-    from typing import List
+    from typing import List, Union
 
+    from ..enums import Color
     from ..missing import Missing
     from ..types.embed import Embed as EmbedData
     from ..types.embed import EmbedAuthor as EmbedAuthorData
@@ -79,14 +80,14 @@ class Embed:
         description: Missing[str] = MISSING,
         url: Missing[str] = MISSING,
         timestamp: Missing[datetime.datetime] = MISSING,
-        color: Missing[int] = MISSING,
+        color: Missing[Union[int, Color]] = MISSING,
     ) -> None:
         self.title: Missing[str] = title
         self.type: str = type or "rich"
         self.description: Missing[str] = description
         self.url: Missing[str] = url
         self.timestamp: Missing[datetime.datetime] = timestamp
-        self.color: Missing[int] = color
+        self.color: Missing[Union[int, Color]] = color
         self.footer: EmbedFooter = EmbedFooter()
         self.image: EmbedImage = EmbedImage()
         self.thumbnail: EmbedThumbnail = EmbedThumbnail()
@@ -112,7 +113,10 @@ class Embed:
         if self.timestamp is not MISSING:
             payload["timestamp"] = str(self.timestamp)
         if self.color is not MISSING:
-            payload["color"] = self.color
+            if isinstance(self.color, Color):
+                payload["color"] = self.color.value
+            else:
+                payload["color"] = self.color
         if self.footer:
             payload["footer"] = self.footer.to_payload()
         if self.image:

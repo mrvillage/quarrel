@@ -41,6 +41,7 @@ __all__ = (
     "InteractionType",
     "ComponentType",
     "InteractionCallbackType",
+    "Color",
 )
 
 
@@ -160,3 +161,12 @@ class InteractionCallbackType(Enum):
     UPDATE_MESSAGE = 7
     APPLICATION_COMMAND_AUTOCOMPLETE_RESPONSE = 8
     MODAL = 9
+
+
+class Color(Enum):
+    GREEN = 0x1F8B4C
+    BLUE = 0x3498DB
+    PURPLE = 0x9B59B6
+    GOLD = 0xF1C40F
+    ORANGE = 0xE67E22
+    RED = 0xE74C3C

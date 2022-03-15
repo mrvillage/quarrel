@@ -298,7 +298,7 @@ class Guild:
         partial: bool = False,
     ) -> Member:
         id = id or int(data.get("user", {"id": 0})["id"])
-        if (member := self.get_channel(id)) is not None:
+        if (member := self.get_member(id)) is not None:
             return member.update(data, partial=partial)  # type: ignore
         member = Member(data, user, self, self._state, id)
         self._members[member.id] = member

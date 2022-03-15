@@ -103,15 +103,14 @@ class Bot:
             except UnknownGatewayMessageType:
                 pass
             except GatewayClosure as e:
-                if e.close_code not in {
-                    4000,
-                    4001,
-                    4002,
-                    4003,
-                    4005,
-                    4007,
-                    4008,
-                    4009,
+                if e.close_code in {
+                    1000,
+                    4004,
+                    4010,
+                    4011,
+                    4012,
+                    4013,
+                    4014,
                 }:
                     raise
                 self.state.clear_for_reconnect()

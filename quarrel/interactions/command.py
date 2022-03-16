@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+import inspect
 from typing import TYPE_CHECKING, Generic, TypeVar, Union
 
 from .. import utils
@@ -76,7 +77,7 @@ if TYPE_CHECKING:
     MCC = TypeVar("MCC", bound=MessageCommandCheck)
     OptionType = Union["Option", "Type[SlashCommand[OPTS]]"]
     NO = TypeVar("NO", bound=Any)
-    Converter = Callable[["SlashCommand[OPTS]", Any], Coroutine[Any, Any, Any]]
+    Converter = Union[Callable[["SlashCommand[OPTS]", Any], Coroutine[Any, Any, Any]], Callable[["SlashCommand[OPTS]", Any], Any]]
     OptionDefault = Union[
         Any,
         Callable[["SlashCommand[OPTS]"], Coroutine[Any, Any, Any]],
@@ -181,10 +182,9 @@ class SlashCommand(Generic[OPTS]):
                     if value is MISSING:
                         default = option.default
                         if callable(default):
-                            if asyncio.iscoroutinefunction(default):
-                                default = await default(self)
-                            else:
-                                default = default(self)
+                            default = default(self)
+                            if inspect.isawaitable(default):
+                                default = await default
                         setattr(options, name, default)
                     else:
                         setattr(
@@ -594,7 +594,10 @@ class Option:
             errors: List[Exception] = []
             for converter in self.converters:
                 try:
-                    return await converter(command, value)
+                    result = converter(command, value)
+                    if inspect.isawaitable(result):
+                        return await result
+                    return result
                 except Exception as e:
                     errors.append(e)
             raise ConversionError(self, value, errors)

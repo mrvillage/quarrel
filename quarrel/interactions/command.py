@@ -33,6 +33,7 @@ from ..errors import CheckError, ConversionError, OptionError
 from ..missing import MISSING
 
 __all__ = (
+    "check",
     "ApplicationCommand",
     "SlashCommand",
     "UserCommand",

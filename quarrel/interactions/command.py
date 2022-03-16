@@ -72,12 +72,15 @@ if TYPE_CHECKING:
     ]
     MessageCommandCheck = Callable[["MessageCommand"], Coroutine[Any, Any, Any]]
 
-    SCC = TypeVar("SCC", bound=SlashCommandCheck[Any])
-    UCC = TypeVar("UCC", bound=UserCommandCheck)
-    MCC = TypeVar("MCC", bound=MessageCommandCheck)
+    SCC = TypeVar("SCC")
+    UCC = TypeVar("UCC")
+    MCC = TypeVar("MCC")
     OptionType = Union["Option", "Type[SlashCommand[OPTS]]"]
     NO = TypeVar("NO", bound=Any)
-    Converter = Union[Callable[["SlashCommand[OPTS]", Any], Coroutine[Any, Any, Any]], Callable[["SlashCommand[OPTS]", Any], Any]]
+    Converter = Union[
+        Callable[["SlashCommand[OPTS]", Any], Coroutine[Any, Any, Any]],
+        Callable[["SlashCommand[OPTS]", Any], Any],
+    ]
     OptionDefault = Union[
         Any,
         Callable[["SlashCommand[OPTS]"], Coroutine[Any, Any, Any]],

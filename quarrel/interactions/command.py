@@ -117,8 +117,8 @@ class SlashCommand(Generic[OPTS]):
     guilds: List[int]
     global_: bool
     command_options: List[OptionType[OPTS]]
-    parent: Optional[Type[SlashCommand[OPTS]]]
-    checks: List[SlashCommandCheck[OPTS]]
+    parent: Optional[Type[SlashCommand[Any]]]
+    checks: List[SlashCommandCheck[Any]]
 
     __slots__ = ("interaction", "options")
 
@@ -130,9 +130,9 @@ class SlashCommand(Generic[OPTS]):
         cls,
         name: Missing[str] = MISSING,
         description: Missing[str] = MISSING,
-        options: Missing[List[OptionType[OPTS]]] = MISSING,
-        parent: Missing[Type[SlashCommand[OPTS]]] = MISSING,
-        checks: Missing[List[SlashCommandCheck[OPTS]]] = MISSING,
+        options: Missing[List[OptionType[Any]]] = MISSING,
+        parent: Missing[Type[SlashCommand[Any]]] = MISSING,
+        checks: Missing[List[SlashCommandCheck[Any]]] = MISSING,
         guilds: Missing[List[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:

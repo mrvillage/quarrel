@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     T = TypeVar("T", bound="Flags")
 
 
-class flag:
+class flag:  # noqa: N801
     def __init__(self, func: Callable[[Any], int]):
         self.flag: int = func(None)
         self.__doc__: Optional[str] = func.__doc__
@@ -48,9 +48,7 @@ class flag:
         ...
 
     def __get__(self, instance: Optional[Flags], owner: Type[T]) -> Any:
-        if instance is None:
-            return self
-        return bool(instance.value & self.flag)
+        return self if instance is None else bool(instance.value & self.flag)
 
     def __set__(self, instance: Flags, value: bool) -> None:
         if value:
@@ -77,11 +75,11 @@ class Flags:
         return flags
 
     @classmethod
-    def none(cls) -> Flags:
+    def none(cls: Type[T]) -> T:
         return cls(0)
 
     @classmethod
-    def all(cls) -> Flags:
+    def all(cls: Type[T]) -> T:
         return cls(-1)
 
 
@@ -174,4 +172,166 @@ class SystemChannelFlags(Flags):
 
 
 class Permissions(Flags):
-    ...
+    @flag
+    def create_instant_invite(self) -> int:
+        return 1 << 0
+
+    @flag
+    def kick_members(self) -> int:
+        return 1 << 1
+
+    @flag
+    def ban_members(self) -> int:
+        return 1 << 2
+
+    @flag
+    def administrator(self) -> int:
+        return 1 << 3
+
+    @flag
+    def manage_channels(self) -> int:
+        return 1 << 4
+
+    @flag
+    def manage_guild(self) -> int:
+        return 1 << 5
+
+    @flag
+    def add_reactions(self) -> int:
+        return 1 << 6
+
+    @flag
+    def view_audit_log(self) -> int:
+        return 1 << 7
+
+    @flag
+    def priority_speaker(self) -> int:
+        return 1 << 8
+
+    @flag
+    def stream(self) -> int:
+        return 1 << 9
+
+    @flag
+    def view_channel(self) -> int:
+        return 1 << 10
+
+    @flag
+    def send_messages(self) -> int:
+        return 1 << 11
+
+    @flag
+    def send_tts_messages(self) -> int:
+        return 1 << 12
+
+    @flag
+    def manage_messages(self) -> int:
+        return 1 << 13
+
+    @flag
+    def embed_links(self) -> int:
+        return 1 << 14
+
+    @flag
+    def attach_files(self) -> int:
+        return 1 << 15
+
+    @flag
+    def read_message_history(self) -> int:
+        return 1 << 16
+
+    @flag
+    def mention_everyone(self) -> int:
+        return 1 << 17
+
+    @flag
+    def use_external_emojis(self) -> int:
+        return 1 << 18
+
+    @flag
+    def view_guild_insights(self) -> int:
+        return 1 << 19
+
+    @flag
+    def connect(self) -> int:
+        return 1 << 20
+
+    @flag
+    def speak(self) -> int:
+        return 1 << 21
+
+    @flag
+    def mute_members(self) -> int:
+        return 1 << 22
+
+    @flag
+    def deafen_members(self) -> int:
+        return 1 << 23
+
+    @flag
+    def move_members(self) -> int:
+        return 1 << 24
+
+    @flag
+    def use_vad(self) -> int:
+        return 1 << 25
+
+    @flag
+    def change_nickname(self) -> int:
+        return 1 << 26
+
+    @flag
+    def manage_nicknames(self) -> int:
+        return 1 << 27
+
+    @flag
+    def manage_roles(self) -> int:
+        return 1 << 28
+
+    @flag
+    def manage_webhooks(self) -> int:
+        return 1 << 29
+
+    @flag
+    def manage_emojis_and_stickers(self) -> int:
+        return 1 << 30
+
+    @flag
+    def use_application_commands(self) -> int:
+        return 1 << 31
+
+    @flag
+    def request_to_speak(self) -> int:
+        return 1 << 32
+
+    @flag
+    def manage_events(self) -> int:
+        return 1 << 33
+
+    @flag
+    def manage_threads(self) -> int:
+        return 1 << 34
+
+    @flag
+    def create_public_threads(self) -> int:
+        return 1 << 35
+
+    @flag
+    def create_private_threads(self) -> int:
+        return 1 << 36
+
+    @flag
+    def use_external_stickers(self) -> int:
+        return 1 << 37
+
+    @flag
+    def send_messages_in_threads(self) -> int:
+        return 1 << 38
+
+    @flag
+    def use_embedded_activities(self) -> int:
+        return 1 << 39
+
+    @flag
+    def moderate_members(self) -> int:
+        return 1 << 40

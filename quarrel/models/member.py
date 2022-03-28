@@ -134,4 +134,6 @@ class Member:
         permissions = Permissions()
         for role in self.roles:
             permissions.value |= role.permissions.value
+        if permissions.administrator or self.id == self.guild.owner_id:
+            return Permissions.all()
         return permissions

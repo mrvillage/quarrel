@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+from ..flags import Permissions
 from ..missing import MISSING
 
 __all__ = ("Role",)
@@ -47,7 +48,7 @@ class Role:
         "_color",
         "hoist",
         "position",
-        "_permissions",
+        "permissions",
         "managed",
         "mentionable",
         "_icon",
@@ -66,7 +67,7 @@ class Role:
         self._color: int = data["color"]
         self.hoist: bool = data["hoist"]
         self.position: int = data["position"]
-        self._permissions: int = int(data["permissions"])
+        self.permissions: Permissions = Permissions(int(data["permissions"]))
         self.managed: bool = data["managed"]
         self.mentionable: bool = data["mentionable"]
 

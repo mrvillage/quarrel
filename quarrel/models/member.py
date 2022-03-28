@@ -27,19 +27,21 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..asset import Asset
+from ..flags import Permissions
 from ..missing import MISSING
 from .user import User
 
 __all__ = ("Member",)
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
+    from typing import List, Optional, Union
 
     from ..missing import Missing
     from ..state import State
     from ..types.member import Member as MemberData
     from ..types.member import MemberWithUser as MemberWithUser
     from .guild import Guild
+    from .role import Role
 
 
 class Member:
@@ -50,6 +52,7 @@ class Member:
         "joined_at",
         "deaf",
         "mute",
+        "role_ids",
         "nickname",
         "avatar",
         "premium_since",
@@ -85,6 +88,8 @@ class Member:
             self.deaf: bool = data["deaf"]
             self.mute: bool = data["mute"]
 
+        self.role_ids: List[int] = [int(i) for i in data["roles"]]
+
         self.nickname: Missing[Optional[str]] = data.get("nick", MISSING)
         avatar = data.get("avatar", MISSING)
         self.avatar: Missing[Optional[Asset]] = (
@@ -119,3 +124,14 @@ class Member:
     @property
     def mention(self) -> str:
         return f"<@{self.id}>"
+
+    @property
+    def roles(self) -> List[Role]:
+        return [r for i in self.role_ids if (r := self.guild.get_role(i)) is not None]
+
+    @property
+    def permissions(self) -> Permissions:
+        permissions = Permissions()
+        for role in self.roles:
+            permissions.value |= role.permissions.value
+        return permissions

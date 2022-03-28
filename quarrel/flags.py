@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-__all__ = ("Intents", "SystemChannelFlags")
+__all__ = ("Intents", "SystemChannelFlags", "Permissions")
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Type, TypeVar
@@ -171,3 +171,7 @@ class SystemChannelFlags(Flags):
     @flag
     def suppress_join_notification_replies(self) -> int:
         return 1 << 3
+
+
+class Permissions(Flags):
+    ...

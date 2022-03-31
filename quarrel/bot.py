@@ -79,8 +79,8 @@ class Bot:
         self.intents: Intents = intents
 
         self.loop: asyncio.AbstractEventLoop = loop or _get_event_loop()
-        self.session: aiohttp.ClientSession = aiohttp.ClientSession()
-        self.http: HTTP = HTTP(self.session, token, self.application_id, self.loop)
+        self.session: aiohttp.ClientSession
+        self.http: HTTP
         self.listeners: Dict[str, Set[CoroutineFunction]] = {}
         self.state: State = State(self)
         self.user: Missing[User] = MISSING
@@ -117,6 +117,8 @@ class Bot:
                 await self.gateway_handler.reconnect()
 
     async def run(self) -> None:
+        self.session: aiohttp.ClientSession = aiohttp.ClientSession()
+        self.http: HTTP = HTTP(self.session, self.token, self.application_id, self.loop)
         await self.register_application_commands()
         await self.connect()
 

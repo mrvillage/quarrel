@@ -104,7 +104,6 @@ class Bot:
                 pass
             except GatewayClosure as e:
                 if e.close_code in {
-                    1000,
                     4004,
                     4010,
                     4011,

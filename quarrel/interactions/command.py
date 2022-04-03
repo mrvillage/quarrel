@@ -72,9 +72,9 @@ if TYPE_CHECKING:
     ]
     MessageCommandCheck = Callable[["MessageCommand"], Coroutine[Any, Any, Any]]
 
-    SCC = TypeVar("SCC")
-    UCC = TypeVar("UCC")
-    MCC = TypeVar("MCC")
+    SCC = TypeVar("SCC", bound=Any)
+    UCC = TypeVar("UCC", bound=Any)
+    MCC = TypeVar("MCC", bound=Any)
     OptionType = Union["Option", "Type[SlashCommand[OPTS]]"]
     NO = TypeVar("NO", bound=Any)
     Converter = Union[
@@ -86,6 +86,8 @@ if TYPE_CHECKING:
         Callable[["SlashCommand[OPTS]"], Coroutine[Any, Any, Any]],
         Callable[["SlashCommand[OPTS]"], Any],
     ]
+
+    OPT = TypeVar("OPT", bound="Option")
 
 OPTS = TypeVar("OPTS")
 
@@ -605,6 +607,34 @@ class Option:
                     errors.append(e)
             raise ConversionError(self, value, errors)
         return value
+
+    def __call__(
+        self: OPT,
+        type: Missing[ApplicationCommandOptionType] = MISSING,
+        name: Missing[str] = MISSING,
+        description: Missing[str] = MISSING,
+        converter: Missing[Converter[OPTS]] = MISSING,
+        converters: Missing[List[Converter[OPTS]]] = MISSING,
+        default: OptionDefault[OPTS] = MISSING,
+        choices: Missing[EnumMeta] = MISSING,
+        channel_types: Missing[Sequence[ChannelType]] = MISSING,
+        min_value: Missing[float] = MISSING,
+        max_value: Missing[float] = MISSING,
+        autocomplete: Missing[bool] = MISSING,
+    ) -> OPT:
+        return self.__class__(
+            self.type if type is MISSING else type,
+            self.name if name is MISSING else name,
+            self.description if description is MISSING else description,
+            converter,
+            self.converters if converters is MISSING else converters,
+            self.default if default is MISSING else default,
+            self.choices if choices is MISSING else choices,
+            self.channel_types if channel_types is MISSING else channel_types,
+            self.min_value if min_value is MISSING else min_value,
+            self.max_value if max_value is MISSING else max_value,
+            self.autocomplete if autocomplete is MISSING else autocomplete,
+        )
 
 
 class Options:

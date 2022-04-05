@@ -631,7 +631,9 @@ class Option:
             self.name if name is MISSING else name,
             self.description if description is MISSING else description,
             converter,
-            self.converters if converters is MISSING else converters,
+            self.converters
+            if converters is MISSING and converter is MISSING
+            else converters,
             self.default if default is MISSING else default,
             self.choices if choices is MISSING else choices,
             self.channel_types if channel_types is MISSING else channel_types,

@@ -613,6 +613,7 @@ class Option:
 
     def __call__(
         self: OPT,
+        *,
         type: Missing[ApplicationCommandOptionType] = MISSING,
         name: Missing[str] = MISSING,
         description: Missing[str] = MISSING,

@@ -190,7 +190,7 @@ class SlashCommand(Generic[OPTS]):
                             default = default(self)
                             if inspect.isawaitable(default):
                                 default = await default
-                        setattr(options, name, default)
+                        setattr(options, option.attribute, default)
                     else:
                         setattr(
                             options,
@@ -216,7 +216,7 @@ class SlashCommand(Generic[OPTS]):
                             default = await default(self)
                         else:
                             default = default(self)
-                    setattr(options, name, default)
+                    setattr(options, param.attribute, default)
                 else:
                     setattr(
                         options,
@@ -511,6 +511,7 @@ class Option:
         "min_value",
         "max_value",
         "autocomplete",
+        "attribute",
     )
 
     def __init__(
@@ -526,6 +527,7 @@ class Option:
         min_value: Missing[float] = MISSING,
         max_value: Missing[float] = MISSING,
         autocomplete: Missing[bool] = MISSING,
+        attribute: Missing[str] = MISSING,
     ):
         self.type: ApplicationCommandOptionType = type
         self.name: str = name
@@ -542,6 +544,7 @@ class Option:
         self.min_value: Missing[float] = min_value
         self.max_value: Missing[float] = max_value
         self.autocomplete: Missing[bool] = autocomplete
+        self.attribute: str = attribute or name
 
     async def autocomplete_callback(self, command: SlashCommand[Any]) -> Any:
         ...
@@ -621,6 +624,7 @@ class Option:
         min_value: Missing[float] = MISSING,
         max_value: Missing[float] = MISSING,
         autocomplete: Missing[bool] = MISSING,
+        attribute: Missing[str] = MISSING,
     ) -> OPT:
         return self.__class__(
             self.type if type is MISSING else type,
@@ -634,6 +638,7 @@ class Option:
             self.min_value if min_value is MISSING else min_value,
             self.max_value if max_value is MISSING else max_value,
             self.autocomplete if autocomplete is MISSING else autocomplete,
+            self.attribute if attribute is MISSING else attribute,
         )
 
 

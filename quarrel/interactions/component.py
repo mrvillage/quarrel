@@ -350,7 +350,7 @@ class Grid:
                 if available[i] >= width:
                     available[i] -= width
         if row is MISSING:
-            return any(available[i] >= width for i in available)
+            return any(i >= width for i in available)
         return available[row - 1] >= width
 
     def add_component(self, component: Component) -> Grid:
@@ -380,7 +380,7 @@ class Grid:
                         continue
                     j.append(i)
                     break
-        return [ActionRow(*i).to_payload() for i in rows]
+        return [ActionRow(*i).to_payload() for i in rows if i]
 
     def store(self, bot: B) -> B:
         for i in self.components:

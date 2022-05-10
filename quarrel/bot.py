@@ -22,9 +22,11 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from typing import TYPE_CHECKING, Type
 
 import aiohttp
@@ -41,11 +43,27 @@ __all__ = ("Bot",)
 
 if TYPE_CHECKING:
     import re
-    from typing import Any, Callable, Coroutine, Dict, List, Optional, Set, TypeVar
+    from typing import (
+        Any,
+        Callable,
+        Coroutine,
+        Dict,
+        List,
+        Optional,
+        Set,
+        TypeVar,
+        Union,
+    )
 
     from .flags import Intents
     from .gateway import Gateway
-    from .interactions import ApplicationCommand, Component, Interaction
+    from .interactions import (
+        ApplicationCommand,
+        Component,
+        Interaction,
+        MessageCommand,
+        UserCommand,
+    )
     from .missing import Missing
     from .models import User
     from .types.interactions import (
@@ -53,8 +71,11 @@ if TYPE_CHECKING:
         ComponentInteractionData,
     )
 
+    Command = Union[
+        Type[ApplicationCommand[Any]], Type[UserCommand], Type[MessageCommand]
+    ]
     CoroutineFunction = Callable[..., Coroutine[Any, Any, Any]]
-    AC = TypeVar("AC", bound=Type[ApplicationCommand[Any]])
+    COM = TypeVar("COM", bound=Command)
     CF = TypeVar("CF", bound=CoroutineFunction)
     C = TypeVar("C", bound=Component)
 
@@ -84,8 +105,8 @@ class Bot:
         self.listeners: Dict[str, Set[CoroutineFunction]] = {}
         self.state: State = State(self)
         self.user: Missing[User] = MISSING
-        self.commands: Set[Type[ApplicationCommand[Any]]] = set()
-        self.registered_commands: Dict[int, Type[ApplicationCommand[Any]]] = {}
+        self.commands: Set[Command] = set()
+        self.registered_commands: Dict[int, Command] = {}
         self.components: Dict[str, Component] = {}
         self.regex_components: Dict[re.Pattern[str], Component] = {}
 
@@ -122,11 +143,9 @@ class Bot:
         await self.connect()
 
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
-        try:
+        with contextlib.suppress(AttributeError):
             coro = getattr(self, f"on_{event}")
             self.loop.create_task(coro(*args, **kwargs))
-        except AttributeError:
-            pass
         if listeners := self.listeners.get(event):
             for listener in listeners:
                 self.loop.create_task(self._dispatch(event, listener, *args, **kwargs))
@@ -164,16 +183,16 @@ class Bot:
         setattr(self, coro.__name__, coro)
         return coro
 
-    def command(self, command: AC) -> AC:
+    def command(self, command: COM) -> COM:
         self.add_command(command)
         return command
 
-    def add_command(self, command: Type[ApplicationCommand[Any]]) -> Bot:
+    def add_command(self, command: Command) -> Bot:
         self.commands.add(command)
         return self
 
-    def component(self, component: C) -> C:
-        self.add_component(component)
+    def component(self, component: Type[C]) -> Type[C]:
+        self.add_component_from_class(component)
         return component
 
     def add_component(self, component: Component) -> Bot:
@@ -183,6 +202,10 @@ class Bot:
             self.components[component.custom_id] = component
         return self
 
+    def add_component_from_class(self, component: Type[C]) -> Type[C]:
+        self.add_component(component())
+        return component
+
     async def register_application_commands(self) -> None:
         commands = {i.name: i for i in self.commands if i.global_}
         if commands:
@@ -191,7 +214,7 @@ class Bot:
             )
             for command in registered:
                 self.registered_commands[int(command["id"])] = commands[command["name"]]
-        guild_commands: Dict[int, List[Type[ApplicationCommand[Any]]]] = {}
+        guild_commands: Dict[int, List[Command]] = {}
         for command in self.commands:
             for guild in command.guilds:
                 if (commands_ := guild_commands.get(guild)) is None:

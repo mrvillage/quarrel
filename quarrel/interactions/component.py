@@ -233,7 +233,7 @@ class SelectMenu:
         self,
         *,
         custom_id: Missing[str] = MISSING,
-        options: Missing[List[SelectOption]],
+        options: Missing[List[SelectOption]] = MISSING,
         placeholder: Missing[str] = MISSING,
         min_values: Missing[int] = MISSING,
         max_values: Missing[int] = MISSING,

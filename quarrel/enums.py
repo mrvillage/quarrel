@@ -40,6 +40,7 @@ __all__ = (
     "ApplicationCommandType",
     "InteractionType",
     "ComponentType",
+    "ButtonStyle",
     "InteractionCallbackType",
     "Color",
 )

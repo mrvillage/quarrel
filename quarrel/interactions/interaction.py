@@ -34,7 +34,7 @@ from ..models import Member, Message, Role, User
 __all__ = ("Interaction",)
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Union
+    from typing import Any, Dict, List, Protocol, Union
 
     from ..bot import Bot
     from ..enums import InteractionCallbackType
@@ -47,6 +47,23 @@ if TYPE_CHECKING:
     from ..types.interactions import InteractionCallbackData
     from ..types.interactions import InteractionData as InteractionDataData
     from .component import Grid
+
+    class RespondAlias(Protocol):
+        async def __call__(
+            self,
+            *,
+            content: Missing[str] = MISSING,
+            embed: Missing[Embed] = MISSING,
+            embeds: Missing[List[Embed]] = MISSING,
+            # allowed_mentions: Missing[AllowedMentions] = MISSING,
+            ephemeral: Missing[bool] = MISSING,
+            # attachments: Missing[Attachment] = MISSING,
+            tts: Missing[bool] = MISSING,
+            grid: Missing[Grid] = MISSING,
+            choices: Missing[List[Choice]] = MISSING,
+            # modal: Missing[Modal] = MISSING,
+        ) -> None:
+            ...
 
 
 class Interaction:
@@ -195,6 +212,13 @@ class Interaction:
         )
         if grid is not MISSING:
             grid.store(self.bot)
+
+    async def respond_with_message(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
+        return await self.respond(
+            InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE, *args, **kwargs
+        )
+
+    respond_with_message: RespondAlias
 
     async def get_original_response(self) -> Message:
         return Message(

@@ -121,10 +121,9 @@ class EmbedAuthor(_EmbedAuthorOptional):
 
 
 class _EmbedFieldOptional(TypedDict, total=False):
-    name: str
-    value: str
     inline: bool
 
 
 class EmbedField(_EmbedFieldOptional):
-    ...
+    name: str
+    value: str

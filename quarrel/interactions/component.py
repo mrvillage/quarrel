@@ -126,8 +126,8 @@ class Button:
         row: Missing[int] = MISSING,
         pattern: Missing[str] = MISSING,
     ) -> None:
-        if custom_id is not MISSING and url is not MISSING:
-            raise ValueError("Cannot specify both custom_id and url")
+        if custom_id is not MISSING and pattern is not MISSING and url is not MISSING:
+            raise ValueError("Cannot specify both custom_id/pattern and url")
         self.style: ButtonStyle = style or (
             ButtonStyle.LINK if url else ButtonStyle.SECONDARY
         )

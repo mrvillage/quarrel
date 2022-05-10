@@ -322,23 +322,19 @@ class EmbedField:
     def __init__(
         self,
         *,
-        name: Missing[Any] = MISSING,
-        value: Missing[Any] = MISSING,
+        name: Any,
+        value: Any,
         inline: Missing[bool] = MISSING,
     ) -> None:
-        self.name: Missing[str] = str(name) if name is not MISSING else MISSING
-        self.value: Missing[str] = str(value) if value is not MISSING else MISSING
+        self.name: Any = name
+        self.value: Any = value
         self.inline: Missing[bool] = inline
 
     def __bool__(self) -> bool:
         return self.name is not MISSING and self.value is not MISSING
 
     def to_payload(self) -> EmbedFieldData:
-        payload: EmbedFieldData = {}
-        if self.name is not MISSING:
-            payload["name"] = self.name
-        if self.value is not MISSING:
-            payload["value"] = self.value
+        payload: EmbedFieldData = {"name": str(self.name), "value": str(self.value)}
         if self.inline is not MISSING:
             payload["inline"] = self.inline
         return payload

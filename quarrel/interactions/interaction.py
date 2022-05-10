@@ -165,6 +165,7 @@ class Interaction:
         type: InteractionCallbackType,
         *,
         content: Missing[str] = MISSING,
+        embed: Missing[Embed] = MISSING,
         embeds: Missing[List[Embed]] = MISSING,
         # allowed_mentions: Missing[AllowedMentions] = MISSING,
         ephemeral: Missing[bool] = MISSING,
@@ -177,6 +178,8 @@ class Interaction:
         data: InteractionCallbackData = {}
         if content is not MISSING:
             data["content"] = content
+        if embed is not MISSING:
+            data["embeds"] = [embed.to_payload()]
         if embeds is not MISSING:
             data["embeds"] = [i.to_payload() for i in embeds]
         if ephemeral is not MISSING:
@@ -204,6 +207,7 @@ class Interaction:
         self,
         *,
         content: Missing[str] = MISSING,
+        embed: Missing[Embed] = MISSING,
         embeds: Missing[List[Embed]] = MISSING,
         # allowed_mentions: Missing[AllowedMentions] = MISSING,
         grid: Missing[Grid] = MISSING,
@@ -214,6 +218,8 @@ class Interaction:
         data: Any = {}
         if content is not MISSING:
             data["content"] = content
+        if embed is not MISSING:
+            data["embeds"] = [embed.to_payload()]
         if embeds is not MISSING:
             data["embeds"] = [i.to_payload() for i in embeds]
         if grid is not MISSING:
@@ -234,6 +240,7 @@ class Interaction:
         self,
         *,
         content: Missing[str],
+        embed: Missing[Embed] = MISSING,
         embeds: Missing[List[Embed]] = MISSING,
         # allowed_mentions: Missing[AllowedMentions] = MISSING,
         ephemeral: Missing[bool] = MISSING,
@@ -245,6 +252,8 @@ class Interaction:
         data: Any = {}
         if content is not MISSING:
             data["content"] = content
+        if embed is not MISSING:
+            data["embeds"] = [embed.to_payload()]
         if embeds is not MISSING:
             data["embeds"] = [i.to_payload() for i in embeds]
         if ephemeral is not MISSING:
@@ -274,6 +283,7 @@ class Interaction:
         message_id: int,
         *,
         content: Missing[str] = MISSING,
+        embed: Missing[Embed] = MISSING,
         embeds: Missing[List[Embed]] = MISSING,
         # allowed_mentions: Missing[AllowedMentions] = MISSING,
         grid: Missing[Grid] = MISSING,
@@ -284,6 +294,8 @@ class Interaction:
         data: Any = {}
         if content is not MISSING:
             data["content"] = content
+        if embed is not MISSING:
+            data["embeds"] = [embed.to_payload()]
         if embeds is not MISSING:
             data["embeds"] = [i.to_payload() for i in embeds]
         if grid is not MISSING:

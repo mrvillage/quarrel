@@ -27,7 +27,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from .. import utils
-from ..enums import InteractionType
+from ..enums import InteractionCallbackType, InteractionType
 from ..missing import MISSING
 from ..models import Member, Message, Role, User
 
@@ -37,7 +37,6 @@ if TYPE_CHECKING:
     from typing import Any, Dict, List, Protocol, Union
 
     from ..bot import Bot
-    from ..enums import InteractionCallbackType
     from ..missing import Missing
     from ..models import Channel, Guild
     from ..state import State

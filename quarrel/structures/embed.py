@@ -42,7 +42,7 @@ __all__ = (
 
 if TYPE_CHECKING:
     import datetime
-    from typing import List, Union
+    from typing import Any, List, Union
 
     from ..missing import Missing
     from ..types.embed import Embed as EmbedData
@@ -322,12 +322,12 @@ class EmbedField:
     def __init__(
         self,
         *,
-        name: Missing[str] = MISSING,
-        value: Missing[str] = MISSING,
+        name: Missing[Any] = MISSING,
+        value: Missing[Any] = MISSING,
         inline: Missing[bool] = MISSING,
     ) -> None:
-        self.name: Missing[str] = name
-        self.value: Missing[str] = value
+        self.name: Missing[str] = str(name) if name is not MISSING else MISSING
+        self.value: Missing[str] = str(value) if value is not MISSING else MISSING
         self.inline: Missing[bool] = inline
 
     def __bool__(self) -> bool:

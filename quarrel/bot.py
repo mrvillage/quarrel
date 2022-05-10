@@ -196,7 +196,7 @@ class Bot:
         return component
 
     def add_component(self, component: Component) -> Bot:
-        if component.pattern is None:
+        if component.pattern is not MISSING:
             self.regex_components[component.pattern] = component
         elif component.custom_id is not MISSING:
             self.components[component.custom_id] = component

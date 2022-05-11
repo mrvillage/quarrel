@@ -219,6 +219,13 @@ class Interaction:
 
     respond_with_message: RespondAlias
 
+    async def respond_with_edit(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
+        return await self.respond(
+            InteractionCallbackType.UPDATE_MESSAGE, *args, **kwargs
+        )
+
+    respond_with_edit: RespondAlias
+
     async def get_original_response(self) -> Message:
         return Message(
             await self.bot.http.get_original_interaction_response(self.token),

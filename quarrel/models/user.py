@@ -88,3 +88,7 @@ class User:
     @property
     def mention(self) -> str:
         return f"<@{self.id}>"
+
+    @property
+    def name(self) -> str:
+        return f"{self.username}#{self.discriminator}"

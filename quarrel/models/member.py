@@ -126,6 +126,14 @@ class Member:
         return f"<@{self.id}>"
 
     @property
+    def name(self) -> str:
+        return f"{self.username}#{self.discriminator}"
+
+    @property
+    def display_name(self) -> str:
+        return self.nickname or self.username
+
+    @property
     def roles(self) -> List[Role]:
         return [r for i in self.role_ids if (r := self.guild.get_role(i)) is not None]
 

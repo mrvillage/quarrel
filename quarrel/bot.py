@@ -65,7 +65,7 @@ if TYPE_CHECKING:
         UserCommand,
     )
     from .missing import Missing
-    from .models import User
+    from .models import Guild, User
     from .types.interactions import (
         ApplicationCommandInteractionData,
         ComponentInteractionData,
@@ -273,3 +273,9 @@ class Bot:
                         )
         elif interaction.type is InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE:
             ...
+
+    def get_guild(self, guild_id: int, /) -> Optional[Guild]:
+        return self.state.get_guild(guild_id)
+
+    def get_user(self, user_id: int, /) -> Optional[User]:
+        return self.state.get_user(user_id)

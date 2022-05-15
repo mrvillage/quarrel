@@ -120,7 +120,7 @@ class Button:
         self,
         *,
         style: Missing[ButtonStyle] = MISSING,
-        label: Missing[str] = MISSING,
+        label: Missing[Any] = MISSING,
         emoji: Missing[Emoji] = MISSING,
         custom_id: Missing[str] = MISSING,
         url: Missing[str] = MISSING,
@@ -133,7 +133,7 @@ class Button:
         self.style: ButtonStyle = style or (
             ButtonStyle.LINK if url else ButtonStyle.SECONDARY
         )
-        self.label: Missing[str] = label
+        self.label: Missing[Any] = label
         self.emoji: Missing[Emoji] = emoji
         self.custom_id: Missing[str] = custom_id or (
             custom_id if url else utils.generate_custom_id(100)
@@ -181,7 +181,7 @@ class Button:
             "style": self.style.value,
         }
         if self.label is not MISSING:
-            payload["label"] = self.label
+            payload["label"] = str(self.label)
         if self.emoji is not MISSING:
             ...  # TODO: Implement emoji
         if self.custom_id is not MISSING:
@@ -237,7 +237,7 @@ class SelectMenu:
         *,
         custom_id: Missing[str] = MISSING,
         options: Missing[List[SelectOption]] = MISSING,
-        placeholder: Missing[str] = MISSING,
+        placeholder: Missing[Any] = MISSING,
         min_values: Missing[int] = MISSING,
         max_values: Missing[int] = MISSING,
         disabled: Missing[bool] = MISSING,
@@ -246,7 +246,7 @@ class SelectMenu:
     ) -> None:
         self.custom_id: str = custom_id or utils.generate_custom_id(100)
         self.options: List[SelectOption] = options or []
-        self.placeholder: Missing[str] = placeholder
+        self.placeholder: Missing[Any] = placeholder
         self.min_values: Missing[int] = min_values
         self.max_values: Missing[int] = max_values
         self.disabled: Missing[bool] = disabled
@@ -298,7 +298,7 @@ class SelectMenu:
             "options": [i.to_payload() for i in self.options],
         }
         if self.placeholder is not MISSING:
-            data["placeholder"] = self.placeholder
+            data["placeholder"] = str(self.placeholder)
         if self.min_values is not MISSING:
             data["min_values"] = self.min_values
         if self.max_values is not MISSING:

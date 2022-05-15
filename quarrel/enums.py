@@ -43,6 +43,7 @@ __all__ = (
     "ButtonStyle",
     "InteractionCallbackType",
     "Color",
+    "TextInputStyle",
 )
 
 
@@ -133,12 +134,14 @@ class InteractionType(Enum):
     APPLICATION_COMMAND = 2
     MESSAGE_COMPONENT = 3
     APPLICATION_COMMAND_AUTOCOMPLETE = 4
+    MODAL_SUBMIT = 5
 
 
 class ComponentType(Enum):
     ACTION_ROW = 1
     BUTTON = 2
     SELECT_MENU = 3
+    TEXT_INPUT = 4
 
 
 class ButtonStyle(Enum):
@@ -190,3 +193,8 @@ class Color(Enum):
     OG_BLURPLE = 0x7289DA
     BLURPLE = 0x5865F2
     YELLOW = 0xFEE75C
+
+
+class TextInputStyle(Enum):
+    SHORT = 1
+    PARAGRAPH = 2

@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from ..types.interactions import Interaction as InteractionData
     from ..types.interactions import InteractionCallbackData
     from ..types.interactions import InteractionData as InteractionDataData
-    from .component import Grid
+    from .component import Grid, Modal
 
     class RespondAlias(Protocol):
         async def __call__(
@@ -60,7 +60,7 @@ if TYPE_CHECKING:
             tts: Missing[bool] = MISSING,
             grid: Missing[Grid] = MISSING,
             choices: Missing[List[Choice]] = MISSING,
-            # modal: Missing[Modal] = MISSING,
+            modal: Missing[Modal[Any]] = MISSING,
         ) -> None:
             ...
 
@@ -189,7 +189,7 @@ class Interaction:
         tts: Missing[bool] = MISSING,
         grid: Missing[Grid] = MISSING,
         choices: Missing[List[Choice]] = MISSING,
-        # modal: Missing[Modal] = MISSING,
+        modal: Missing[Modal[Any]] = MISSING,
     ) -> None:
         data: InteractionCallbackData = {}
         if content is not MISSING:
@@ -206,11 +206,17 @@ class Interaction:
             data["components"] = grid.to_payload()
         if choices is not MISSING:
             data["choices"] = choices
+        if modal is not MISSING:
+            data["custom_id"] = modal.custom_id
+            data["title"] = modal.title
+            data["components"] = modal.to_payload()
         await self.bot.http.create_interaction_response(
             self.id, self.token, {"type": type.value, "data": data}
         )
         if grid is not MISSING:
             grid.store(self.bot)
+        if modal is not MISSING:
+            modal.store(self.bot)
 
     async def respond_with_message(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
         return await self.respond(

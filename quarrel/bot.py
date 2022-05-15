@@ -62,6 +62,7 @@ if TYPE_CHECKING:
         Component,
         Interaction,
         MessageCommand,
+        Modal,
         UserCommand,
     )
     from .missing import Missing
@@ -69,6 +70,7 @@ if TYPE_CHECKING:
     from .types.interactions import (
         ApplicationCommandInteractionData,
         ComponentInteractionData,
+        ModalSubmitInteractionData,
     )
 
     Command = Union[
@@ -78,6 +80,7 @@ if TYPE_CHECKING:
     COM = TypeVar("COM", bound=Command)
     CF = TypeVar("CF", bound=CoroutineFunction)
     C = TypeVar("C", bound=Component)
+    M = TypeVar("M", bound=Modal[Any])
 
 
 def _get_event_loop() -> asyncio.AbstractEventLoop:
@@ -109,6 +112,8 @@ class Bot:
         self.registered_commands: Dict[int, Command] = {}
         self.components: Dict[str, Component] = {}
         self.regex_components: Dict[re.Pattern[str], Component] = {}
+        self.modals: Dict[str, Modal[Any]] = {}
+        self.regex_modals: Dict[re.Pattern[str], Modal[Any]] = {}
 
     @property
     def gateway(self) -> Gateway:
@@ -206,6 +211,21 @@ class Bot:
         self.add_component(component())
         return component
 
+    def modal(self, modal: Type[M]) -> Type[M]:
+        self.add_modal_from_class(modal)
+        return modal
+
+    def add_modal(self, modal: Modal[Any]) -> Bot:
+        if modal.pattern is not MISSING:
+            self.regex_modals[modal.pattern] = modal
+        elif modal.custom_id is not MISSING:
+            self.modals[modal.custom_id] = modal
+        return self
+
+    def add_modal_from_class(self, modal: Type[M]) -> Type[M]:
+        self.add_modal(modal(title=modal.__name__))
+        return modal
+
     async def register_application_commands(self) -> None:
         commands = {i.name: i for i in self.commands if i.global_}
         if commands:
@@ -273,6 +293,26 @@ class Bot:
                         )
         elif interaction.type is InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE:
             ...
+        elif interaction.type is InteractionType.MODAL_SUBMIT:
+            data: ModalSubmitInteractionData = interaction.data  # type: ignore
+            custom_id = data["custom_id"]
+            modal = self.modals.get(custom_id)
+            if modal is not None:
+                try:
+                    return await modal.run_modal(interaction, {})
+                except Exception as e:
+                    return utils.print_exception_with_header(
+                        f"Ignoring exception while processing modal {modal}:", e
+                    )
+            for pattern, modal in self.regex_modals.items():
+                match = pattern.match(custom_id)
+                if match is not None:
+                    try:
+                        return await modal.run_modal(interaction, match.groupdict())
+                    except Exception as e:
+                        return utils.print_exception_with_header(
+                            f"Ignoring exception while processing modal {modal}:", e
+                        )
 
     def get_guild(self, guild_id: int, /) -> Optional[Guild]:
         return self.state.get_guild(guild_id)

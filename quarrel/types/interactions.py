@@ -46,6 +46,7 @@ __all__ = (
     "ActionRow",
     "Button",
     "SelectMenu",
+    "TextInput",
     "Component",
     "InteractionResponse",
     "InteractionCallbackData",
@@ -97,6 +98,15 @@ class ComponentInteractionData(_ComponentInteractionDataOptional):
     component_type: int  # enum
 
 
+class _ModalSubmitInteractionDataOptional(TypedDict, total=False):
+    ...
+
+
+class ModalSubmitInteractionData(_ModalSubmitInteractionDataOptional):
+    custom_id: str
+    components: List[Component]  # enum
+
+
 class UserMessageCommandInteractionData(ApplicationCommandInteractionData):
     target_id: Snowflake
 
@@ -105,6 +115,7 @@ InteractionData = Union[
     ApplicationCommandInteractionData,
     ComponentInteractionData,
     UserMessageCommandInteractionData,
+    ModalSubmitInteractionData,
 ]
 
 
@@ -219,7 +230,22 @@ class SelectMenu(_SelectMenuOptional):
     options: List[SelectOption]
 
 
-Component = Union[ActionRow, Button, SelectMenu]
+class _TextInputOptional(TypedDict, total=False):
+    min_length: int
+    max_length: int
+    required: bool
+    value: str
+    placeholder: str
+
+
+class TextInput(_TextInputOptional):
+    type: Literal[4]
+    custom_id: str
+    style: int  # enum
+    label: str
+
+
+Component = Union[ActionRow, Button, SelectMenu, TextInput]
 
 
 class _InteractionResponseOptional(TypedDict, total=False):

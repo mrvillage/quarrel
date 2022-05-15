@@ -39,6 +39,7 @@ __all__ = (
     "Button",
     "SelectMenu",
     "TextInput",
+    "ModalValues",
     "Modal",
     "Grid",
     "SelectOption",

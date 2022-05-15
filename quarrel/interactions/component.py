@@ -45,7 +45,17 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Coroutine, Dict, Final, List, Optional, Tuple
+    from typing import (
+        Any,
+        Callable,
+        Coroutine,
+        Dict,
+        Final,
+        Generator,
+        List,
+        Optional,
+        Tuple,
+    )
 
     from ..bot import Bot
     from ..missing import Missing
@@ -68,7 +78,7 @@ if TYPE_CHECKING:
         ["Grid", "Component", Interaction, Groups, Tuple[str]], Coroutine[Any, Any, Any]
     ]
     ModalCheck = Callable[
-        ["Modal[M]", Interaction, Groups, "Tuple[TextInputValue]"],
+        ["Modal[M]", Interaction, Groups, "M"],
         Coroutine[Any, Any, Any],
     ]
 
@@ -339,9 +349,9 @@ class TextInput:
     type: Final = ComponentType.TEXT_INPUT
 
     __slots__ = (
-        "custom_id",
-        "style",
+        "name" "style",
         "label",
+        "custom_id",
         "min_length",
         "max_length",
         "required",
@@ -354,6 +364,7 @@ class TextInput:
 
     def __init__(
         self,
+        name: str,
         *,
         style: TextInputStyle,
         label: str,
@@ -365,9 +376,10 @@ class TextInput:
         placeholder: Missing[str] = MISSING,
         row: Missing[int] = MISSING,
     ) -> None:
-        self.custom_id: str = custom_id or utils.generate_custom_id(100)
+        self.name: str = name
         self.style: TextInputStyle = style
         self.label: str = label
+        self.custom_id: str = custom_id or utils.generate_custom_id(100)
         self.min_length: Missing[int] = min_length
         self.max_length: Missing[int] = max_length
         self.required: Missing[bool] = required
@@ -411,7 +423,14 @@ class TextInputValue:
 
 
 class ModalValues:
-    ...
+    @classmethod
+    def from_generator(
+        cls, generator: Generator[TextInputValue, None, None]
+    ) -> ModalValues:
+        self = cls()
+        for value in generator:
+            setattr(self, value.component.name, value.value)
+        return self
 
 
 class Modal(Generic[M]):
@@ -488,7 +507,7 @@ class Modal(Generic[M]):
         bot.add_modal(self)
         return bot
 
-    def build_component(self, data: ComponentData) -> TextInput:
+    def build_component(self, data: ComponentData) -> TextInputValue:
         if data["type"] == ComponentType.TEXT_INPUT.value:
             return TextInputValue.from_payload(self, data["value"], data["custom_id"])  # type: ignore
         raise ValueError(f"Unknown component type: {data['type']}")
@@ -497,7 +516,7 @@ class Modal(Generic[M]):
         # type: ignore to save using .get, if an interaction gets here
         # it will have values or there should be an error since the user
         # messed with something incorrectly
-        values: Tuple[TextInputValue] = tuple(self.build_component(j) for i in interaction.data["components"] for j in i["components"])  # type: ignore
+        values: M = ModalValues.from_generator(self.build_component(j) for i in interaction.data["components"] for j in i["components"])  # type: ignore
         for check in self.checks:
             try:
                 if not await check(self, interaction, groups, values):
@@ -510,7 +529,7 @@ class Modal(Generic[M]):
             return await self.on_error(interaction, values, e)
 
     async def on_error(
-        self, interaction: Interaction, values: Tuple[TextInputValue], error: Exception
+        self, interaction: Interaction, values: M, error: Exception
     ) -> None:
         if isinstance(error, CheckError):
             utils.print_exception_with_header(
@@ -522,7 +541,7 @@ class Modal(Generic[M]):
             )
 
     async def on_check_error(
-        self, interaction: Interaction, values: Tuple[TextInputValue], error: Exception
+        self, interaction: Interaction, values: M, error: Exception
     ) -> None:
         await self.on_error(interaction, values, CheckError(error))
 
@@ -530,7 +549,7 @@ class Modal(Generic[M]):
         self,
         interaction: Interaction,
         groups: Missing[Dict[str, str]],
-        values: Tuple[TextInputValue],
+        values: M,
     ) -> Any:
         ...
 

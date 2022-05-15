@@ -39,8 +39,9 @@ __all__ = (
     "Button",
     "SelectMenu",
     "TextInput",
-    "ModalValues",
+    "TextInputValue",
     "Modal",
+    "ModalValues",
     "Grid",
     "SelectOption",
 )
@@ -423,17 +424,6 @@ class TextInputValue:
         return cls(value, next(i for i in modal.components if i.custom_id == custom_id))
 
 
-class ModalValues:
-    @classmethod
-    def from_generator(
-        cls, generator: Generator[TextInputValue, None, None]
-    ) -> ModalValues:
-        self = cls()
-        for value in generator:
-            setattr(self, value.component.name, value.value)
-        return self
-
-
 class Modal(Generic[M]):
     checks: List[ModalCheck[M]]
 
@@ -553,6 +543,17 @@ class Modal(Generic[M]):
         values: M,
     ) -> Any:
         ...
+
+
+class ModalValues:
+    @classmethod
+    def from_generator(
+        cls, generator: Generator[TextInputValue, None, None]
+    ) -> ModalValues:
+        self = cls()
+        for value in generator:
+            setattr(self, value.component.name, value.value)
+        return self
 
 
 class Grid:

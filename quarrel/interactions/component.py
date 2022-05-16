@@ -71,7 +71,6 @@ if TYPE_CHECKING:
     from .interaction import Interaction
 
     Groups = Dict[str, str]
-    # something something indirect reference to itself, doesn't seem to break anything
     ButtonCheck = Callable[["Component", Interaction, Groups], Coroutine[Any, Any, Any]]
     SelectMenuCheck = Callable[
         ["Component", Interaction, Groups, Tuple[str]], Coroutine[Any, Any, Any]

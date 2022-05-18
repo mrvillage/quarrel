@@ -148,8 +148,8 @@ class _BaseThreadOptional(TypedDict, total=False):
     thread_metadata: ThreadMetadata
     member: ThreadMember
 
-
-class _BaseThread(_BaseGuildChannel, _BaseThreadOptional):
+# parent_id issue mentioned above
+class _BaseThread(_BaseGuildChannel, _BaseThreadOptional): # type: ignore
     ...
 
 

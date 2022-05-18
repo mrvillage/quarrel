@@ -54,6 +54,7 @@ if TYPE_CHECKING:
         List,
         Optional,
         Sequence,
+        Set,
         Type,
         cast,
     )
@@ -120,7 +121,7 @@ class SlashCommand(Generic[OPTS]):
     type: Final = ApplicationCommandType.CHAT_INPUT
     name: str
     description: str
-    guilds: List[int]
+    guilds: Set[int]
     global_: bool
     command_options: List[OptionType[OPTS]]
     parent: Optional[Type[SlashCommand[Any]]]
@@ -139,7 +140,7 @@ class SlashCommand(Generic[OPTS]):
         options: Missing[List[OptionType[Any]]] = MISSING,
         parent: Missing[Type[SlashCommand[Any]]] = MISSING,
         checks: Missing[List[SlashCommandCheck[Any]]] = MISSING,
-        guilds: Missing[List[int]] = MISSING,
+        guilds: Missing[Set[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
@@ -154,8 +155,9 @@ class SlashCommand(Generic[OPTS]):
         cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
             checks or []
         )
-        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "guilds", [])] + (
-            guilds or []
+        # getattr call has Set[Unknown] as default
+        cls.guilds = {j for i in cls.__mro__ for j in getattr(i, "guilds", set())} | (  # type: ignore
+            guilds or set()
         )
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
 
@@ -171,7 +173,7 @@ class SlashCommand(Generic[OPTS]):
             and cls.command_options[0].type is ApplicationCommandType.CHAT_INPUT
         ):
             parameters: Dict[str, SlashCommand] = {i.name: i for i in cls.command_options}  # type: ignore
-            await parameters[options_[0]["name"]].run_command(interaction, options_[0].get("options", []))  # type: ignore
+            return await parameters[options_[0]["name"]].run_command(interaction, options_[0].get("options", []))  # type: ignore
         options = Options()
         self = cls(interaction, options)
         arguments: Dict[str, Any] = {i["name"]: i for i in options_}  # type: ignore
@@ -324,7 +326,7 @@ class SlashCommand(Generic[OPTS]):
 class UserCommand:
     type: Final = ApplicationCommandType.USER
     name: str
-    guilds: List[int]
+    guilds: Set[int]
     global_: bool
     checks: List[UserCommandCheck]
 
@@ -338,15 +340,16 @@ class UserCommand:
         cls,
         name: Missing[str] = MISSING,
         checks: Missing[List[UserCommandCheck]] = MISSING,
-        guilds: Missing[List[int]] = MISSING,
+        guilds: Missing[Set[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
         cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
             checks or []
         )
-        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "guilds", [])] + (
-            guilds or []
+        # getattr call has Set[Unknown] as default
+        cls.guilds = {j for i in cls.__mro__ for j in getattr(i, "guilds", set())} + (  # type: ignore
+            guilds or set()
         )
         cls.global_ = global_ if global_ is not MISSING else not guilds
 
@@ -414,7 +417,7 @@ class UserCommand:
 class MessageCommand:
     type: Final = ApplicationCommandType.USER
     name: str
-    guilds: List[int]
+    guilds: Set[int]
     global_: bool
     checks: List[MessageCommandCheck]
 
@@ -428,15 +431,16 @@ class MessageCommand:
         cls,
         name: Missing[str] = MISSING,
         checks: Missing[List[MessageCommandCheck]] = MISSING,
-        guilds: Missing[List[int]] = MISSING,
+        guilds: Missing[Set[int]] = MISSING,
         global_: Missing[bool] = MISSING,
     ) -> None:
         cls.name = name or ""
         cls.checks = [j for i in cls.__mro__ for j in getattr(i, "checks", [])] + (
             checks or []
         )
-        cls.guilds = [j for i in cls.__mro__ for j in getattr(i, "guilds", [])] + (
-            guilds or []
+        # getattr call has Set[Unknown] as default
+        cls.guilds = {j for i in cls.__mro__ for j in getattr(i, "guilds", set())} + (  # type: ignore
+            guilds or set()
         )
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)
 

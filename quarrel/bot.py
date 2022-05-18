@@ -223,7 +223,8 @@ class Bot:
         return self
 
     def add_modal_from_class(self, modal: Type[M]) -> Type[M]:
-        self.add_modal(modal(title=modal.__name__))
+        # should pass no arguments to the init method
+        self.add_modal(modal())  # type: ignore
         return modal
 
     async def register_application_commands(self) -> None:

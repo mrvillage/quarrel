@@ -61,6 +61,7 @@ if TYPE_CHECKING:
 
     from .file import File
     from .missing import Missing
+    from .types import requests
     from .types.interactions import (
         ApplicationCommand,
         InteractionResponse,
@@ -432,4 +433,12 @@ class HTTP:
                 "webhook_token": token,
                 "message_id": message_id,
             },
+        )
+
+    def create_message(self, channel_id: int, data: requests.CreateMessage) -> Response[Message]:
+        return self.request(
+            "POST",
+            "/channels/{channel_id}/messages",
+            {"channel_id": channel_id},
+            json=data,
         )

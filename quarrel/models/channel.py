@@ -46,8 +46,12 @@ __all__ = (
 if TYPE_CHECKING:
     from typing import List, Optional
 
+    from ..bot import Bot
+    from ..interactions import Grid
     from ..missing import Missing
     from ..state import State
+    from ..structures import Embed
+    from ..types import requests
     from ..types.channel import CategoryChannel as CategoryChannelData
     from ..types.channel import Channel as ChannelData
     from ..types.channel import DMChannel as DMChannelData
@@ -59,6 +63,7 @@ if TYPE_CHECKING:
     from ..types.channel import VoiceChannel as VoiceChannelData
     from ..types.permissions import PermissionOverwrite
     from .guild import Guild
+    from .message import Message
 
 T = TypeVar("T", bound="Channel")
 
@@ -83,7 +88,47 @@ class RootChannel(Generic[T]):
         raise TypeError(f"type {type} does not match known channel types")
 
 
-class TextChannel:
+class _BaseChannel:
+    id: int
+    _state: State
+    bot: Bot
+    __slots__ = ()
+
+    async def create_message(
+        self,
+        *,
+        content: Missing[str],
+        embed: Missing[Embed] = MISSING,
+        embeds: Missing[List[Embed]] = MISSING,
+        # allowed_mentions: Missing[AllowedMentions] = MISSING,
+        # attachments: Missing[Attachment] = MISSING,
+        tts: Missing[bool] = MISSING,
+        grid: Missing[Grid] = MISSING,
+        # files: Missing[List[File]] = MISSING,
+    ) -> Message:
+        data: requests.CreateMessage = {}
+        if content is not MISSING:
+            data["content"] = content
+        if embed is not MISSING:
+            data["embeds"] = [embed.to_payload()]
+        if embeds is not MISSING:
+            data["embeds"] = [i.to_payload() for i in embeds]
+        if tts is not MISSING:
+            data["tts"] = tts
+        if grid is not MISSING:
+            data["components"] = grid.to_payload()
+        message = Message(
+            await self.bot.http.create_message(self.id, data),
+            # BaseChannel will never be directly instantiated
+            self,  # type: ignore
+            self._state,
+        )
+        if grid is not MISSING:
+            grid.store(self.bot)
+        return message
+
+
+class TextChannel(_BaseChannel):
     __slots__ = (
         "guild",
         "_state",
@@ -123,7 +168,7 @@ class TextChannel:
         return self
 
 
-class DMChannel:
+class DMChannel(_BaseChannel):
     __slots__ = ("_state", "id")
 
     def __init__(self, data: DMChannelData, state: State) -> None:
@@ -135,7 +180,7 @@ class DMChannel:
         return self
 
 
-class VoiceChannel:
+class VoiceChannel(_BaseChannel):
     __slots__ = ("guild", "_state", "id")
 
     def __init__(self, data: VoiceChannelData, guild: Guild, state: State) -> None:
@@ -150,7 +195,7 @@ class VoiceChannel:
         return self
 
 
-class CategoryChannel:
+class CategoryChannel(_BaseChannel):
     __slots__ = ("guild", "_state", "id")
 
     def __init__(self, data: CategoryChannelData, guild: Guild, state: State) -> None:
@@ -165,7 +210,7 @@ class CategoryChannel:
         return self
 
 
-class StoreChannel:
+class StoreChannel(_BaseChannel):
     __slots__ = ("guild", "_state", "id")
 
     def __init__(self, data: StoreChannelData, guild: Guild, state: State) -> None:
@@ -180,7 +225,7 @@ class StoreChannel:
         return self
 
 
-class Thread:
+class Thread(_BaseChannel):
     __slots__ = ("guild", "_state", "id")
 
     def __init__(self, data: ThreadData, guild: Guild, state: State) -> None:
@@ -193,7 +238,7 @@ class Thread:
         return self
 
 
-class StageChannel:
+class StageChannel(_BaseChannel):
     __slots__ = ("guild", "_state", "id")
 
     def __init__(self, data: StageChannelData, guild: Guild, state: State) -> None:

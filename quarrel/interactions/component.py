@@ -350,7 +350,8 @@ class TextInput:
     type: Final = ComponentType.TEXT_INPUT
 
     __slots__ = (
-        "name" "style",
+        "name",
+        "style",
         "label",
         "custom_id",
         "min_length",
@@ -551,7 +552,7 @@ class ModalValues:
     ) -> ModalValues:
         self = cls()
         for value in generator:
-            setattr(self, value.component.name, value.value)
+            setattr(self, value.component.name, value)
         return self
 
 

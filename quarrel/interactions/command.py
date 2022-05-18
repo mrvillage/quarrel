@@ -186,7 +186,7 @@ class SlashCommand(Generic[OPTS]):
                 value = arguments.get(name, MISSING)
                 option = parameters[name]
                 try:
-                    setattr(options, f"_raw_{option.attribute}", value)
+                    setattr(options, f"__quarrel_raw_{option.attribute}__", value)
                     if value is MISSING:
                         default = option.default
                         if callable(default):

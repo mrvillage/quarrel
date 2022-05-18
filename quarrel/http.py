@@ -435,10 +435,22 @@ class HTTP:
             },
         )
 
-    def create_message(self, channel_id: int, data: requests.CreateMessage) -> Response[Message]:
+    def create_message(
+        self, channel_id: int, data: requests.CreateMessage
+    ) -> Response[Message]:
         return self.request(
             "POST",
             "/channels/{channel_id}/messages",
             {"channel_id": channel_id},
+            json=data,
+        )
+
+    def edit_message(
+        self, channel_id: int, message_id: int, data: requests.EditMessage
+    ) -> Response[Message]:
+        return self.request(
+            "PATCH",
+            "/channels/{channel_id}/messages/{message_id}",
+            {"channel_id": channel_id, "message_id": message_id},
             json=data,
         )

@@ -37,6 +37,7 @@ from .events import EventHandler
 from .gateway import GatewayClosure, GatewayHandler, UnknownGatewayMessageType
 from .http import HTTP
 from .missing import MISSING
+from .models.message import Message
 from .state import State
 
 __all__ = ("Bot",)
@@ -65,8 +66,11 @@ if TYPE_CHECKING:
         Modal,
         UserCommand,
     )
+    from .interactions.component import Grid
     from .missing import Missing
     from .models import Guild, User
+    from .structures.embed import Embed
+    from .types import requests
     from .types.interactions import (
         ApplicationCommandInteractionData,
         ComponentInteractionData,
@@ -314,6 +318,40 @@ class Bot:
                         return utils.print_exception_with_header(
                             f"Ignoring exception while processing modal {modal}:", e
                         )
+
+    async def edit_message(
+        self,
+        channel_id: int,
+        message_id: int,
+        *,
+        content: Missing[Optional[str]] = MISSING,
+        embed: Missing[Optional[Embed]] = MISSING,
+        embeds: Missing[Optional[List[Embed]]],
+        # allowed_mentions: Missing[AllowedMentions] = MISSING,
+        # attachments: Missing[Attachment] = MISSING,
+        grid: Missing[Grid] = MISSING,
+        # files: Missing[List[File]] = MISSING,
+    ) -> Message:
+        data: requests.EditMessage = {}
+        if content is not MISSING:
+            data["content"] = content
+        if embed is not MISSING:
+            data["embeds"] = [embed.to_payload()] if embed is not None else None
+        if embeds is not MISSING:
+            data["embeds"] = (
+                [i.to_payload() for i in embeds] if embeds is not None else None
+            )
+        if grid is not MISSING:
+            data["components"] = grid.to_payload()
+        message = Message(
+            await self.http.edit_message(channel_id, message_id, data),
+            # BaseChannel will never be directly instantiated
+            self,  # type: ignore
+            self.state,
+        )
+        if grid is not MISSING:
+            grid.store(self)
+        return message
 
     def get_guild(self, guild_id: int, /) -> Optional[Guild]:
         return self.state.get_guild(guild_id)

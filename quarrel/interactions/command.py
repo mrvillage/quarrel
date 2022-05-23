@@ -349,7 +349,7 @@ class UserCommand:
             checks or []
         )
         # getattr call has Set[Unknown] as default
-        cls.guilds = {j for i in cls.__mro__ for j in getattr(i, "guilds", set())} + (  # type: ignore
+        cls.guilds = {j for i in cls.__mro__ for j in getattr(i, "guilds", set())} | (  # type: ignore
             guilds or set()
         )
         cls.global_ = global_ if global_ is not MISSING else not guilds
@@ -440,7 +440,7 @@ class MessageCommand:
             checks or []
         )
         # getattr call has Set[Unknown] as default
-        cls.guilds = {j for i in cls.__mro__ for j in getattr(i, "guilds", set())} + (  # type: ignore
+        cls.guilds = {j for i in cls.__mro__ for j in getattr(i, "guilds", set())} | (  # type: ignore
             guilds or set()
         )
         cls.global_ = global_ if global_ is not MISSING else not bool(guilds)

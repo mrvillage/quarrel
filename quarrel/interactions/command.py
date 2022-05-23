@@ -223,7 +223,7 @@ class SlashCommand(Generic[OPTS]):
                 else:
                     setattr(
                         options,
-                        name,
+                        param.attribute,
                         await param.parse(self, value["value"]),
                     )
             except Exception as e:

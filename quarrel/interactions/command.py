@@ -181,10 +181,10 @@ class SlashCommand(Generic[OPTS]):
         for check in cls.checks:
             requires: List[str] = getattr(check, "__check_requires__", [])
             for name in requires:
-                if hasattr(options, name):
+                option = parameters[name]
+                if hasattr(options, option.attribute):
                     continue
                 value = arguments.get(name, MISSING)
-                option = parameters[name]
                 try:
                     setattr(options, f"__quarrel_raw_{option.attribute}__", value)
                     if value is MISSING:
@@ -208,10 +208,11 @@ class SlashCommand(Generic[OPTS]):
             except Exception as e:
                 return await self.on_check_error(e)
         for name, param in parameters.items():
-            if hasattr(options, name):
+            if hasattr(options, param.attribute):
                 continue
             value = arguments.get(name, MISSING)
             try:
+                setattr(options, f"__quarrel_raw_{param.attribute}__", value)
                 if value is MISSING:
                     default = param.default
                     if callable(default):

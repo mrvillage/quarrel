@@ -97,7 +97,7 @@ class _BaseChannel:
     async def create_message(
         self,
         *,
-        content: Missing[str],
+        content: Missing[str] = MISSING,
         embed: Missing[Embed] = MISSING,
         embeds: Missing[List[Embed]] = MISSING,
         # allowed_mentions: Missing[AllowedMentions] = MISSING,

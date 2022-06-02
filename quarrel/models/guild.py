@@ -29,6 +29,7 @@ import secrets
 from typing import TYPE_CHECKING, Set
 
 from .. import utils
+from ..asset import Asset
 from ..enums import (
     GuildDefaultMessageNotificationLevel,
     GuildExplicitContentFilter,
@@ -68,7 +69,7 @@ class Guild:
         "_state",
         "id",
         "name",
-        "_icon",
+        "icon",
         "_splash",
         "_discovery_splash",
         "owner_id",
@@ -120,7 +121,12 @@ class Guild:
 
     def update(self, data: GuildData) -> Guild:
         self.name: str = data["name"]
-        self._icon: Optional[str] = data["icon"]
+        icon = data["icon"]
+        self.icon: Optional[Asset] = (
+            Asset.guild_icon(self.id, icon, http=self._state.bot.http)
+            if icon is not MISSING and icon is not None
+            else icon
+        )
         self._splash: Optional[str] = data["splash"]
         self._discovery_splash: Optional[str] = data["discovery_splash"]
         self.owner_id: int = int(data["owner_id"])

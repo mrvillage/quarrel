@@ -34,12 +34,15 @@ from .user import User
 __all__ = ("Member",)
 
 if TYPE_CHECKING:
+    import datetime
     from typing import List, Optional, Union
 
     from ..missing import Missing
     from ..state import State
+    from ..types import requests
     from ..types.member import Member as MemberData
     from ..types.member import MemberWithUser as MemberWithUser
+    from .channel import TalkGuildChannel
     from .guild import Guild
     from .role import Role
 
@@ -145,3 +148,40 @@ class Member:
         if permissions.administrator or self.id == self.guild.owner_id:
             return Permissions.all()
         return permissions
+
+    async def add_role(self, role: Role) -> None:
+        await self._state.bot.http.add_guild_member_role(
+            self.guild.id, self.id, role.id
+        )
+
+    async def remove_role(self, role: Role) -> None:
+        await self._state.bot.http.remove_guild_member_role(
+            self.guild.id, self.id, role.id
+        )
+
+    async def edit(
+        self,
+        *,
+        nickname: Missing[Optional[str]] = MISSING,
+        roles: Missing[Optional[List[Role]]] = MISSING,
+        mute: Missing[Optional[bool]] = MISSING,
+        deaf: Missing[Optional[bool]] = MISSING,
+        channel: Missing[Optional[TalkGuildChannel]] = MISSING,
+        communication_disabled_until: Missing[Optional[datetime.datetime]] = MISSING,
+    ) -> None:
+        data: requests.EditGuildMember = {}
+        if nickname is not MISSING:
+            data["nick"] = nickname
+        if roles is not MISSING:
+            data["roles"] = [r.id for r in roles] if roles else None
+        if mute is not MISSING:
+            data["mute"] = mute
+        if deaf is not MISSING:
+            data["deaf"] = deaf
+        if channel is not MISSING:
+            data["channel_id"] = channel and channel.id
+        if communication_disabled_until is not MISSING:
+            data["communication_disabled_until"] = (
+                communication_disabled_until.isoformat() if communication_disabled_until else None
+            )
+        await self._state.bot.http.edit_guild_member(self.guild.id, self.id, data)

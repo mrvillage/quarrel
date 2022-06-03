@@ -41,6 +41,10 @@ __all__ = (
     "GuildChannel",
     "Channel",
     "ChannelFactory",
+    "MessageGuildChannel",
+"MessageChannel",
+"TalkGuildChannel",
+"TalkChannel",
 )
 
 if TYPE_CHECKING:
@@ -259,3 +263,7 @@ GuildChannel = Union[
 Channel = Union[GuildChannel, DMChannel]
 ChannelFactory = RootChannel[Channel]
 GuildChannelFactory = RootChannel[GuildChannel]
+MessageGuildChannel = Union[TextChannel, VoiceChannel, Thread]
+MessageChannel = Union[MessageGuildChannel, DMChannel]
+TalkGuildChannel = Union[VoiceChannel, StageChannel]
+TalkChannel = Union[TalkGuildChannel, DMChannel]

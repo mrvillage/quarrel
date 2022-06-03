@@ -454,3 +454,31 @@ class HTTP:
             {"channel_id": channel_id, "message_id": message_id},
             json=data,
         )
+
+    def add_guild_member_role(
+        self, guild_id: int, member_id: int, role_id: int
+    ) -> Response[Message]:
+        return self.request(
+            "PUT",
+            "/guilds/{guild_id}/members/{member_id}/roles/{role_id}",
+            {"guild_id": guild_id, "member_id": member_id, "role_id": role_id},
+        )
+
+    def remove_guild_member_role(
+        self, guild_id: int, member_id: int, role_id: int
+    ) -> Response[Message]:
+        return self.request(
+            "DELETE",
+            "/guilds/{guild_id}/members/{member_id}/roles/{role_id}",
+            {"guild_id": guild_id, "member_id": member_id, "role_id": role_id},
+        )
+
+    def edit_guild_member(
+        self, guild_id: int, member_id: int, data: requests.EditGuildMember
+    ) -> Response[Message]:
+        return self.request(
+            "PATCH",
+            "/guilds/{guild_id}/members/{member_id}",
+            {"guild_id": guild_id, "member_id": member_id},
+            json=data,
+        )

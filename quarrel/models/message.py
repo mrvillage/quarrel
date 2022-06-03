@@ -62,7 +62,7 @@ class Message:
         *,
         content: Missing[Optional[str]] = MISSING,
         embed: Missing[Optional[Embed]] = MISSING,
-        embeds: Missing[Optional[List[Embed]]],
+        embeds: Missing[Optional[List[Embed]]] = MISSING,
         # allowed_mentions: Missing[AllowedMentions] = MISSING,
         # attachments: Missing[Attachment] = MISSING,
         grid: Missing[Grid] = MISSING,
@@ -81,8 +81,7 @@ class Message:
             data["components"] = grid.to_payload()
         message = Message(
             await self._state.bot.http.edit_message(self.channel_id, self.id, data),
-            # BaseChannel will never be directly instantiated
-            self,  # type: ignore
+            self.channel,
             self._state,
         )
         if grid is not MISSING:

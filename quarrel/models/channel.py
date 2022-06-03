@@ -42,9 +42,9 @@ __all__ = (
     "Channel",
     "ChannelFactory",
     "MessageGuildChannel",
-"MessageChannel",
-"TalkGuildChannel",
-"TalkChannel",
+    "MessageChannel",
+    "TalkGuildChannel",
+    "TalkChannel",
 )
 
 if TYPE_CHECKING:
@@ -129,6 +129,39 @@ class _BaseChannel:
         )
         if grid is not MISSING:
             grid.store(self.bot)
+        return message
+
+    async def edit_message(
+        self,
+        message_id: int,
+        *,
+        content: Missing[Optional[str]] = MISSING,
+        embed: Missing[Optional[Embed]] = MISSING,
+        embeds: Missing[Optional[List[Embed]]] = MISSING,
+        # allowed_mentions: Missing[AllowedMentions] = MISSING,
+        # attachments: Missing[Attachment] = MISSING,
+        grid: Missing[Grid] = MISSING,
+        # files: Missing[List[File]] = MISSING,
+    ) -> Message:
+        data: requests.EditMessage = {}
+        if content is not MISSING:
+            data["content"] = content
+        if embed is not MISSING:
+            data["embeds"] = [embed.to_payload()] if embed is not None else None
+        if embeds is not MISSING:
+            data["embeds"] = (
+                [i.to_payload() for i in embeds] if embeds is not None else None
+            )
+        if grid is not MISSING:
+            data["components"] = grid.to_payload()
+        message = Message(
+            await self._state.bot.http.edit_message(self.id, message_id, data),
+            # BaseChannel will never be directly instantiated
+            self,  # type: ignore
+            self._state,
+        )
+        if grid is not MISSING:
+            grid.store(self._state.bot)
         return message
 
 

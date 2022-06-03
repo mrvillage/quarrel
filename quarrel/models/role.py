@@ -75,3 +75,7 @@ class Role:
         self._unicode_emoji: Missing[Optional[str]] = data.get("unicode_emoji", MISSING)
         self._tags: Missing[RoleTags] = data.get("tags", MISSING)
         return self
+
+    @property
+    def mention(self) -> str:
+        return f"<@&{self.id}>"

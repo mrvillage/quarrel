@@ -362,6 +362,7 @@ class TextInput:
         "modal",
         "row",
         "pattern",
+        "attribute",
     )
 
     def __init__(
@@ -377,6 +378,7 @@ class TextInput:
         value: Missing[str] = MISSING,
         placeholder: Missing[str] = MISSING,
         row: Missing[int] = MISSING,
+        attribute: Missing[str] = MISSING,
     ) -> None:
         self.name: str = name
         self.style: TextInputStyle = style
@@ -389,6 +391,7 @@ class TextInput:
         self.placeholder: Missing[str] = placeholder
         self.modal: Optional[Modal[Any]] = None
         self.row: Missing[int] = row
+        self.attribute: str = attribute or name
 
     def to_payload(self) -> TextInputData:
         payload: TextInputData = {
@@ -552,7 +555,7 @@ class ModalValues:
     ) -> ModalValues:
         self = cls()
         for value in generator:
-            setattr(self, value.component.name, value)
+            setattr(self, value.component.attribute, value)
         return self
 
 

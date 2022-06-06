@@ -41,12 +41,15 @@ __all__ = (
     "print_exception_with_header",
     "print_exception",
     "generate_custom_id",
+    "update_or_current",
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any, Optional, TypeVar
 
     from .missing import Missing
+
+    T = TypeVar("T")
 
 
 def get_int_or_none(value: Optional[Any]) -> Optional[int]:
@@ -66,9 +69,7 @@ def get_int_or_none_or_missing(value: Optional[Any]) -> Missing[Optional[int]]:
 
 
 def get_datetime_or_missing(value: Any) -> Missing[datetime.datetime]:
-    if value is MISSING:
-        return MISSING
-    return datetime.datetime.fromisoformat(value)
+    return MISSING if value is MISSING else datetime.datetime.fromisoformat(value)
 
 
 def get_datetime_or_none(value: Optional[Any]) -> Optional[datetime.datetime]:
@@ -86,3 +87,7 @@ def print_exception(error: Exception) -> None:
 
 def generate_custom_id(length: int = 100) -> str:
     return secrets.token_hex(length // 2)
+
+
+def update_or_current(updated: T, new: Missing[T]) -> T:
+    return updated if new is MISSING else new

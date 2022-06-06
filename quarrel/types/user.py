@@ -28,7 +28,7 @@ from typing import Optional, TypedDict
 
 from .snowflake import Snowflake
 
-__all__ = ("User",)
+__all__ = ("User", "PartialUser")
 
 
 class _UserOptional(TypedDict, total=False):
@@ -50,3 +50,13 @@ class User(_UserOptional):
     username: str
     discriminator: str
     avatar: Optional[str]
+
+
+class _PartialUserOptional(_UserOptional, total=False):
+    username: str
+    discriminator: str
+    avatar: Optional[str]
+
+
+class PartialUser(_PartialUserOptional):
+    id: Snowflake

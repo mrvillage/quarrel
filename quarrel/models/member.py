@@ -182,6 +182,8 @@ class Member:
             data["channel_id"] = channel and channel.id
         if communication_disabled_until is not MISSING:
             data["communication_disabled_until"] = (
-                communication_disabled_until.isoformat() if communication_disabled_until else None
+                communication_disabled_until.isoformat()
+                if communication_disabled_until
+                else None
             )
         await self._state.bot.http.edit_guild_member(self.guild.id, self.id, data)

@@ -26,6 +26,9 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from .snowflake import Snowflake
+from .user import PartialUser
+
 __all__ = ("PartialPresenceUpdate", "PresenceUpdate")
 
 
@@ -34,7 +37,8 @@ class _PartialPresenceUpdateOptional(TypedDict, total=False):
 
 
 class PartialPresenceUpdate(_PartialPresenceUpdateOptional):
-    ...
+    user: PartialUser
+    guild_id: Snowflake
 
 
 class PresenceUpdate(PartialPresenceUpdate):

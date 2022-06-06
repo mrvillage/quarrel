@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .. import utils
 from ..asset import Asset
 from ..missing import MISSING
 
@@ -61,22 +62,41 @@ class User:
         self.update(data)
 
     def update(self, data: UserData) -> User:
-        self.username: str = data["username"]
-        self.discriminator: str = data["discriminator"]
-        avatar = data["avatar"]
-        self.avatar: Optional[Asset] = (
-            Asset.user_avatar(self.id, avatar, http=self._state.bot.http)
-            if avatar is not None
-            else None
+        self.username: str = utils.update_or_current(
+            data.get("username", MISSING), self.username
         )
+        self.discriminator: str = utils.update_or_current(
+            data.get("discriminator", MISSING), self.discriminator
+        )
+        if "avatar" in data:
+            avatar = data["avatar"]
+            self.avatar: Optional[Asset] = (
+                Asset.user_avatar(self.id, avatar, http=self._state.bot.http)
+                if avatar is not None
+                else None
+            )
 
-        self.bot: Missing[bool] = data.get("bot", MISSING)
-        self.system: Missing[bool] = data.get("system", MISSING)
-        self.banner: Missing[Optional[str]] = data.get("banner", MISSING)
-        self.accent_color: Missing[Optional[int]] = data.get("accent_color", MISSING)
-        self.verified: Missing[bool] = data.get("verified", MISSING)
-        self.email: Missing[Optional[str]] = data.get("email", MISSING)
-        self.public_flags: int = data.get("public_flags", 0)
+        self.bot: Missing[bool] = utils.update_or_current(
+            data.get("bot", MISSING), self.bot
+        )
+        self.system: Missing[bool] = utils.update_or_current(
+            data.get("system", MISSING), self.system
+        )
+        self.banner: Missing[Optional[str]] = utils.update_or_current(
+            data.get("banner", MISSING), self.banner
+        )
+        self.accent_color: Missing[Optional[int]] = utils.update_or_current(
+            data.get("accent_color", MISSING), self.accent_color
+        )
+        self.verified: Missing[bool] = utils.update_or_current(
+            data.get("verified", MISSING), self.verified
+        )
+        self.email: Missing[Optional[str]] = utils.update_or_current(
+            data.get("email", MISSING), self.email
+        )
+        self.public_flags: int = utils.update_or_current(
+            data.get("public_flags", 0), self.public_flags
+        )
         return self
 
     @property

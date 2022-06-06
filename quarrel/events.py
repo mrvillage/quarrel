@@ -281,6 +281,5 @@ class EventHandler:
             member = guild.get_member(user_id)
             if member is not None:
                 old = copy.copy(member.user)
-                # argument type mismatch between TypedDicts
-                user = member.user.update(data["user"])  # type: ignore
+                user = member.user.update_all_optional(data["user"])
                 self.dispatch("user_update", old, user)

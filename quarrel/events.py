@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING
 
 from . import utils
 from .interactions import Interaction
+from .missing import MISSING
 from .models import Guild, Member, Role, User
 from .models.channel import GuildChannelFactory
 
@@ -40,7 +41,6 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Tuple
 
     from .bot import Bot
-    from .missing import MISSING
     from .models.channel import GuildChannel, Thread
     from .state import State
     from .types.channel import Channel as ChannelData

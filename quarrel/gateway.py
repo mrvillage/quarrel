@@ -147,7 +147,7 @@ class Gateway:
         cls, session: aiohttp.ClientSession, url: str, user_agent: str, /
     ) -> Gateway:
         return cls(
-            await session.ws_connect(
+            await session.ws_connect(  # type: ignore
                 f"{url}?v=10&encoding=json&compress=zlib-stream",
                 max_msg_size=0,
                 autoclose=False,

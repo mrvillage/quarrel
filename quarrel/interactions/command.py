@@ -175,7 +175,7 @@ class SlashCommand(Generic[OPTS]):
             parameters: Dict[str, SlashCommand] = {i.name: i for i in cls.command_options}  # type: ignore
             return await parameters[options_[0]["name"]].run_command(interaction, options_[0].get("options", []))  # type: ignore
         options = Options()
-        self = cls(interaction, options)
+        self: SlashCommand[Any] = cls(interaction, options)
         arguments: Dict[str, Any] = {i["name"]: i for i in options_}  # type: ignore
         parameters: Dict[str, Option] = {i.name: i for i in cls.command_options}  # type: ignore
         for check in cls.checks:

@@ -138,9 +138,8 @@ class Interaction:
                         self.resolved["roles"][int(key)] = guild.parse_role(value)
                 if channels := resolved.get("channels", {}):
                     for key, value in channels.items():
-                        self.resolved["channels"][int(key)] = guild.parse_channel(
-                            value, partial=True
-                        )
+                        if (c := guild.parse_channel(value, partial=True)) is not None:
+                            self.resolved["channels"][int(key)] = c
                 if messages := resolved.get("messages", {}):
                     for key, value in messages.items():
                         channel = guild.get_channel(int(value["channel_id"])) or MISSING
@@ -233,9 +232,7 @@ class Interaction:
     respond_with_edit: RespondAlias
 
     async def respond_with_modal(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
-        return await self.respond(
-            InteractionCallbackType.MODAL, *args, **kwargs
-        )
+        return await self.respond(InteractionCallbackType.MODAL, *args, **kwargs)
 
     respond_with_modal: RespondAlias
 

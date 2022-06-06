@@ -166,7 +166,7 @@ class Button:
         if self.grid is not None:
             for check in self.grid.checks:
                 try:
-                    if not await check(self.grid, self, interaction, groups, tuple()):
+                    if not await check(self.grid, self, interaction, groups, tuple()):  # type: ignore
                         return
                 except Exception as e:
                     return await self.on_check_error(interaction, e)

@@ -212,7 +212,7 @@ class Guild:
             GuildChannelFactory(i, self, self._state)
             for i in [*data.get("channels", []), *data.get("threads", [])]
         ]
-        self._channels: Dict[int, GuildChannel] = {c.id: c for c in channels}
+        self._channels: Dict[int, GuildChannel] = {c.id: c for c in channels if c}
         # self.presences
         # self.stage_instances
         stickers = [Sticker(i, self, self._state) for i in data.get("stickers", [])]
@@ -272,12 +272,13 @@ class Guild:
 
     def parse_channel(
         self, data: GuildChannelData, /, *, partial: bool = False
-    ) -> GuildChannel:
+    ) -> Optional[GuildChannel]:
         id = int(data["id"])
         if (channel := self.get_channel(id)) is not None:
             return channel.update(data, partial=partial)  # type: ignore
         channel = GuildChannelFactory(data, self, self._state)
-        self._channels[channel.id] = channel
+        if channel is not None:
+            self._channels[channel.id] = channel
         return channel
 
     @property

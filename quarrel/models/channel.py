@@ -73,7 +73,9 @@ T = TypeVar("T", bound="Channel")
 
 
 class RootChannel(Generic[T]):
-    def __new__(cls, data: ChannelData, guild: Optional[Guild], state: State) -> T:
+    def __new__(
+        cls, data: ChannelData, guild: Optional[Guild], state: State
+    ) -> Optional[T]:
         type = data["type"]
         if type in {0, 5}:
             return TextChannel(data, guild, state)  # type: ignore
@@ -89,7 +91,6 @@ class RootChannel(Generic[T]):
             return Thread(data, guild, state)  # type: ignore
         elif type == 13:
             return StageChannel(data, guild, state)  # type: ignore
-        raise TypeError(f"type {type} does not match known channel types")
 
 
 class _BaseChannel:

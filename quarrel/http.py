@@ -62,7 +62,7 @@ if TYPE_CHECKING:
     from .file import File
     from .missing import Missing
     from .types import requests
-    from .types.channel import GuildChannel
+    from .types.channel import Channel, GuildChannel
     from .types.interactions import (
         ApplicationCommand,
         InteractionResponse,
@@ -492,4 +492,21 @@ class HTTP:
             "/guilds/{guild_id}/channels",
             {"guild_id": guild_id},
             json=data,
+        )
+
+    def edit_channel(
+        self, channel_id: int, data: requests.EditChannel
+    ) -> Response[Channel]:
+        return self.request(
+            "PATCH",
+            "/channels/{channel_id}",
+            {"channel_id": channel_id},
+            json=data,
+        )
+
+    def delete_channel(self, channel_id: int) -> Response[Channel]:
+        return self.request(
+            "DELETE",
+            "/channels/{channel_id}",
+            {"channel_id": channel_id},
         )

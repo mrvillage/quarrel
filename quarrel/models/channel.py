@@ -166,6 +166,26 @@ class _BaseChannel:
             grid.store(self._state.bot)
         return message
 
+    async def edit(
+        self,
+        *,
+        name: Missing[str],
+        parent: Missing[CategoryChannel],
+        topic: Missing[str],
+    ) -> None:
+        data: requests.EditChannel = {}
+        if name is not MISSING:
+            data["name"] = name
+        if parent is not MISSING:
+            data["parent_id"] = parent.id
+        if topic is not MISSING:
+            data["topic"] = topic
+        # update is not defined on _BaseChannel
+        self.update(await self._state.bot.http.edit_channel(self.id, data))  # type: ignore
+
+    async def delete(self) -> None:
+        await self._state.bot.http.delete_channel(self.id)
+
 
 class TextChannel(_BaseChannel):
     __slots__ = (

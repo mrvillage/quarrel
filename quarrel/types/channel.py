@@ -55,7 +55,7 @@ class _BaseChannel(TypedDict):
 
 class _BaseGuildChannelOptional(TypedDict, total=False):
     position: int
-    permissions_overwrites: List[PermissionOverwrite]
+    permission_overwrites: List[PermissionOverwrite]
     name: str
     nsfw: bool
     parent_id: Optional[Snowflake]

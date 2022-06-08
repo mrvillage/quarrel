@@ -23,3 +23,4 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from .embed import *
+from .permission_overwrite import *

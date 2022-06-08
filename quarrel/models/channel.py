@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     from ..interactions import Grid
     from ..missing import Missing
     from ..state import State
-    from ..structures import Embed
+    from ..structures import Embed, PermissionOverwrite
     from ..types import requests
     from ..types.channel import CategoryChannel as CategoryChannelData
     from ..types.channel import Channel as ChannelData
@@ -65,7 +65,6 @@ if TYPE_CHECKING:
     from ..types.channel import TextChannel as TextChannelData
     from ..types.channel import Thread as ThreadData
     from ..types.channel import VoiceChannel as VoiceChannelData
-    from ..types.permissions import PermissionOverwrite
     from .guild import Guild
     from .message import Message
 
@@ -172,6 +171,7 @@ class _BaseChannel:
         name: Missing[str] = MISSING,
         parent: Missing[Optional[CategoryChannel]] = MISSING,
         topic: Missing[str] = MISSING,
+        overwrites: Missing[List[PermissionOverwrite]] = MISSING,
     ) -> None:
         data: requests.EditChannel = {}
         if name is not MISSING:
@@ -180,6 +180,8 @@ class _BaseChannel:
             data["parent_id"] = parent and parent.id
         if topic is not MISSING:
             data["topic"] = topic
+        if overwrites is not MISSING:
+            data["permission_overwrites"] = [i.to_payload() for i in overwrites]
         # update is not defined on _BaseChannel
         self.update(await self._state.bot.http.edit_channel(self.id, data))  # type: ignore
 
@@ -216,9 +218,9 @@ class TextChannel(_BaseChannel):
         self.type: Literal[ChannelType.GUILD_TEXT] = ChannelType(data["type"])  # type: ignore
 
         self.position: Missing[int] = data.get("position", MISSING)
-        self.permission_overwrites: List[PermissionOverwrite] = data.get(
-            "permission_overwrites", []
-        )
+        self.permission_overwrites: List[PermissionOverwrite] = [
+            PermissionOverwrite(i) for i in data.get("permission_overwrites", [])
+        ]
         self.name: Missing[str] = data.get("name", MISSING)
         self.nsfw: Missing[bool] = data.get("nsfw", MISSING)
         self.parent_id: Missing[Optional[int]] = utils.get_int_or_none_or_missing(

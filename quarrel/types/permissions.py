@@ -34,5 +34,5 @@ __all__ = ("PermissionOverwrite",)
 class PermissionOverwrite(TypedDict):
     id: Snowflake
     type: int  # enum
-    allow: int
-    deny: int
+    allow: str
+    deny: str

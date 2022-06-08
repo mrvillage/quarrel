@@ -44,6 +44,7 @@ __all__ = (
     "InteractionCallbackType",
     "Color",
     "TextInputStyle",
+    "PermissionOverwriteType",
 )
 
 
@@ -198,3 +199,8 @@ class Color(Enum):
 class TextInputStyle(Enum):
     SHORT = 1
     PARAGRAPH = 2
+
+
+class PermissionOverwriteType(Enum):
+    ROLE = 0
+    MEMBER = 1

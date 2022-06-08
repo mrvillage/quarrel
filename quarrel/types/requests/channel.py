@@ -4,6 +4,7 @@ from typing import List, Optional, TypedDict
 
 from ..embed import Embed
 from ..interactions import Component
+from ..permissions import PermissionOverwrite
 from ..snowflake import Snowflake
 
 __all__ = ("CreateMessage", "EditMessage", "CreateGuildChannel", "EditChannel")
@@ -44,6 +45,7 @@ class _CreateGuildChannelOptional(TypedDict, total=False):
     type: int  # enum
     topic: str
     parent_id: Snowflake
+    permission_overwrites: List[PermissionOverwrite]
 
 
 class CreateGuildChannel(_CreateGuildChannelOptional):
@@ -54,6 +56,7 @@ class _EditChannel(TypedDict, total=False):
     name: str
     parent_id: Optional[int]
     topic: str
+    permission_overwrites: List[PermissionOverwrite]
 
 
 class EditChannel(_EditChannel):

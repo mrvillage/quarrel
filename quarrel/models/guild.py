@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from ..enums import ChannelType
     from ..missing import Missing
     from ..state import State
+    from ..structures import PermissionOverwrite
     from ..types import requests
     from ..types.channel import GuildChannel as GuildChannelData
     from ..types.gateway import GuildMembersChunk
@@ -336,12 +337,15 @@ class Guild:
         *,
         topic: Missing[str] = MISSING,
         parent: Missing[CategoryChannel] = MISSING,
+        overwrites: Missing[List[PermissionOverwrite]] = MISSING,
     ) -> GuildChannel:
         data: requests.CreateGuildChannel = {"type": type.value, "name": name}
         if topic is not MISSING:
             data["topic"] = topic
         if parent is not MISSING:
             data["parent_id"] = parent.id
+        if overwrites is not MISSING:
+            data["permission_overwrites"] = [i.to_payload() for i in overwrites]
         channel = GuildChannelFactory(
             await self._state.bot.http.create_guild_channel(
                 self.id,

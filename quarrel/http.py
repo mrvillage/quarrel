@@ -62,6 +62,7 @@ if TYPE_CHECKING:
     from .file import File
     from .missing import Missing
     from .types import requests
+    from .types.channel import GuildChannel
     from .types.interactions import (
         ApplicationCommand,
         InteractionResponse,
@@ -480,5 +481,15 @@ class HTTP:
             "PATCH",
             "/guilds/{guild_id}/members/{member_id}",
             {"guild_id": guild_id, "member_id": member_id},
+            json=data,
+        )
+
+    def create_guild_channel(
+        self, guild_id: int, data: requests.CreateGuildChannel
+    ) -> Response[GuildChannel]:
+        return self.request(
+            "POST",
+            "/guilds/{guild_id}/channels",
+            {"guild_id": guild_id},
             json=data,
         )

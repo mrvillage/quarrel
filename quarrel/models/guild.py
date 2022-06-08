@@ -54,14 +54,17 @@ if TYPE_CHECKING:
     import datetime
     from typing import Dict, List, Optional
 
+    from ..enums import ChannelType
     from ..missing import Missing
     from ..state import State
+    from ..types import requests
     from ..types.channel import GuildChannel as GuildChannelData
     from ..types.gateway import GuildMembersChunk
     from ..types.guild import Guild as GuildData
     from ..types.guild import GuildFeature
     from ..types.member import Member as MemberData
     from ..types.role import Role as RoleData
+    from .channel import CategoryChannel
 
 
 class Guild:
@@ -325,3 +328,29 @@ class Guild:
         role = Role(data, self, self._state)
         self._roles[role.id] = role
         return role
+
+    async def create_channel(
+        self,
+        type: ChannelType,
+        name: str,
+        *,
+        topic: Missing[str] = MISSING,
+        parent: Missing[CategoryChannel] = MISSING,
+    ) -> GuildChannel:
+        data: requests.CreateGuildChannel = {"type": type.value, "name": name}
+        if topic is not MISSING:
+            data["topic"] = topic
+        if parent is not MISSING:
+            data["parent_id"] = parent.id
+        channel = GuildChannelFactory(
+            await self._state.bot.http.create_guild_channel(
+                self.id,
+                data,
+            ),
+            self,
+            self._state,
+        )
+        if channel is not None:
+            self._channels[channel.id] = channel
+            return channel
+        raise ValueError("Channel created with unknown type")

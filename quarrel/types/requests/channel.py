@@ -6,7 +6,7 @@ from ..embed import Embed
 from ..interactions import Component
 from ..snowflake import Snowflake
 
-__all__ = ("CreateMessage", "EditMessage")
+__all__ = ("CreateMessage", "EditMessage", "CreateGuildChannel")
 
 
 class _CreateMessageOptional(TypedDict, total=False):
@@ -38,3 +38,13 @@ class _EditMessageOptional(TypedDict, total=False):
 
 class EditMessage(_EditMessageOptional):
     ...
+
+
+class _CreateGuildChannelOptional(TypedDict, total=False):
+    type: int  # enum
+    topic: str
+    parent_id: Snowflake
+
+
+class CreateGuildChannel(_CreateGuildChannelOptional):
+    name: str

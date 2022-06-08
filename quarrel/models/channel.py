@@ -48,7 +48,7 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import List, Literal, Optional
 
     from ..bot import Bot
     from ..interactions import Grid
@@ -97,6 +97,7 @@ class _BaseChannel:
     id: int
     _state: State
     bot: Bot
+    type: ChannelType
     __slots__ = ()
 
     async def create_message(
@@ -192,7 +193,7 @@ class TextChannel(_BaseChannel):
     def update(
         self, data: Union[TextChannelData, NewsChannelData], /, *, partial: bool = False
     ) -> TextChannel:
-        self.type: ChannelType = ChannelType(data["type"])
+        self.type: Literal[ChannelType.GUILD_TEXT] = ChannelType(data["type"])  # type: ignore
 
         self.position: Missing[int] = data.get("position", MISSING)
         self.permission_overwrites: List[PermissionOverwrite] = data.get(
@@ -215,6 +216,7 @@ class DMChannel(_BaseChannel):
         self.update(data)
 
     def update(self, data: DMChannelData, /, *, partial: bool = False) -> DMChannel:
+        self.type: Literal[ChannelType.DM] = ChannelType(data["type"])  # type: ignore
         return self
 
 
@@ -230,11 +232,12 @@ class VoiceChannel(_BaseChannel):
     def update(
         self, data: VoiceChannelData, /, *, partial: bool = False
     ) -> VoiceChannel:
+        self.type: Literal[ChannelType.GUILD_VOICE] = ChannelType(data["type"])  # type: ignore
         return self
 
 
 class CategoryChannel(_BaseChannel):
-    __slots__ = ("guild", "_state", "id")
+    __slots__ = ("guild", "_state", "id", "name")
 
     def __init__(self, data: CategoryChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
@@ -245,6 +248,9 @@ class CategoryChannel(_BaseChannel):
     def update(
         self, data: CategoryChannelData, /, *, partial: bool = False
     ) -> CategoryChannel:
+        self.type: Literal[ChannelType.GUILD_CATEGORY] = ChannelType(data["type"])  # type: ignore
+
+        self.name: str = data["name"]
         return self
 
 
@@ -260,6 +266,7 @@ class StoreChannel(_BaseChannel):
     def update(
         self, data: StoreChannelData, /, *, partial: bool = False
     ) -> StoreChannel:
+        self.type: Literal[ChannelType.GUILD_STORE] = ChannelType(data["type"])  # type: ignore
         return self
 
 
@@ -273,6 +280,7 @@ class Thread(_BaseChannel):
         self.update(data)
 
     def update(self, data: ThreadData, /, *, partial: bool = False) -> Thread:
+        self.type: Literal[ChannelType.GUILD_NEWS_THREAD, ChannelType.GUILD_PRIVATE_THREAD, ChannelType.GUILD_PUBLIC_THREAD] = ChannelType(data["type"])  # type: ignore
         return self
 
 
@@ -288,6 +296,7 @@ class StageChannel(_BaseChannel):
     def update(
         self, data: StageChannelData, /, *, partial: bool = False
     ) -> StageChannel:
+        self.type: Literal[ChannelType.GUILD_STAGE_VOICE] = ChannelType(data["type"])  # type: ignore
         return self
 
 

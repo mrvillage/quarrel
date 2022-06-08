@@ -117,6 +117,7 @@ class _CategoryChannelOptional(TypedDict, total=False):
 
 class CategoryChannel(_BaseGuildChannel, _CategoryChannelOptional):
     type: Literal[4]
+    name: str
 
 
 class _NewsChannelOptional(TypedDict, total=False):
@@ -148,8 +149,9 @@ class _BaseThreadOptional(TypedDict, total=False):
     thread_metadata: ThreadMetadata
     member: ThreadMember
 
+
 # parent_id issue mentioned above
-class _BaseThread(_BaseGuildChannel, _BaseThreadOptional): # type: ignore
+class _BaseThread(_BaseGuildChannel, _BaseThreadOptional):  # type: ignore
     ...
 
 

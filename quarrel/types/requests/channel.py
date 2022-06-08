@@ -7,7 +7,13 @@ from ..interactions import Component
 from ..permissions import PermissionOverwrite
 from ..snowflake import Snowflake
 
-__all__ = ("CreateMessage", "EditMessage", "CreateGuildChannel", "EditChannel")
+__all__ = (
+    "CreateMessage",
+    "EditMessage",
+    "CreateGuildChannel",
+    "EditChannel",
+    "EditChannelPermissions",
+)
 
 
 class _CreateMessageOptional(TypedDict, total=False):
@@ -61,3 +67,12 @@ class _EditChannel(TypedDict, total=False):
 
 class EditChannel(_EditChannel):
     ...
+
+
+class _EditChannelPermissionsOptional(TypedDict, total=False):
+    allow: str
+    deny: str
+
+
+class EditChannelPermissions(_EditChannelPermissionsOptional):
+    type: int  # enum

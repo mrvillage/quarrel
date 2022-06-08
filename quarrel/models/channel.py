@@ -188,6 +188,16 @@ class _BaseChannel:
     async def delete(self) -> None:
         await self._state.bot.http.delete_channel(self.id)
 
+    async def edit_permission_overwrite(
+        self,
+        overwrite: PermissionOverwrite,
+    ) -> None:
+        await self._state.bot.http.edit_channel_permissions(
+            self.id,
+            overwrite.id,
+            {"type": overwrite.type.value, "allow": str(overwrite.allow.value), "deny": str(overwrite.deny.value)}
+        )
+
 
 class TextChannel(_BaseChannel):
     __slots__ = (

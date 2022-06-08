@@ -510,3 +510,13 @@ class HTTP:
             "/channels/{channel_id}",
             {"channel_id": channel_id},
         )
+
+    def edit_channel_permissions(
+        self, channel_id: int, overwrite_id: int, data: requests.EditChannelPermissions
+    ) -> Response[None]:
+        return self.request(
+            "PATCH",
+            "/channels/{channel_id}/permissions/{overwrite_id}",
+            {"overwrite_id": overwrite_id},
+            json=data,
+        )

@@ -52,7 +52,7 @@ class CreateGuildChannel(_CreateGuildChannelOptional):
 
 class _EditChannel(TypedDict, total=False):
     name: str
-    parent_id: int
+    parent_id: Optional[int]
     topic: str
 
 

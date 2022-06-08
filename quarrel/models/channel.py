@@ -169,15 +169,15 @@ class _BaseChannel:
     async def edit(
         self,
         *,
-        name: Missing[str],
-        parent: Missing[CategoryChannel],
-        topic: Missing[str],
+        name: Missing[str] = MISSING,
+        parent: Missing[Optional[CategoryChannel]] = MISSING,
+        topic: Missing[str] = MISSING,
     ) -> None:
         data: requests.EditChannel = {}
         if name is not MISSING:
             data["name"] = name
         if parent is not MISSING:
-            data["parent_id"] = parent.id
+            data["parent_id"] = parent and parent.id
         if topic is not MISSING:
             data["topic"] = topic
         # update is not defined on _BaseChannel

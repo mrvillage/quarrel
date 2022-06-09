@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar, Union
 from .. import utils
 from ..enums import ChannelType
 from ..missing import MISSING
+from ..structures import PermissionOverwrite
 
 __all__ = (
     "RootChannel",
@@ -50,11 +51,10 @@ __all__ = (
 if TYPE_CHECKING:
     from typing import List, Literal, Optional
 
-    from ..bot import Bot
     from ..interactions import Grid
     from ..missing import Missing
     from ..state import State
-    from ..structures import Embed, PermissionOverwrite
+    from ..structures import Embed
     from ..types import requests
     from ..types.channel import CategoryChannel as CategoryChannelData
     from ..types.channel import Channel as ChannelData
@@ -95,9 +95,8 @@ class RootChannel(Generic[T]):
 class _BaseChannel:
     id: int
     _state: State
-    bot: Bot
     type: ChannelType
-    __slots__ = ()
+    __slots__ = ("id", "_state", "type")
 
     async def create_message(
         self,
@@ -123,13 +122,13 @@ class _BaseChannel:
         if grid is not MISSING:
             data["components"] = grid.to_payload()
         message = Message(
-            await self.bot.http.create_message(self.id, data),
+            await self._state.bot.http.create_message(self.id, data),
             # BaseChannel will never be directly instantiated
             self,  # type: ignore
             self._state,
         )
         if grid is not MISSING:
-            grid.store(self.bot)
+            grid.store(self._state.bot)
         return message
 
     async def edit_message(
@@ -195,16 +194,17 @@ class _BaseChannel:
         await self._state.bot.http.edit_channel_permissions(
             self.id,
             overwrite.id,
-            {"type": overwrite.type.value, "allow": str(overwrite.allow.value), "deny": str(overwrite.deny.value)}
+            {
+                "type": overwrite.type.value,
+                "allow": str(overwrite.allow.value),
+                "deny": str(overwrite.deny.value),
+            },
         )
 
 
 class TextChannel(_BaseChannel):
     __slots__ = (
         "guild",
-        "_state",
-        "id",
-        "type",
         "guild_id",
         "position",
         "permission_overwrites",
@@ -240,7 +240,7 @@ class TextChannel(_BaseChannel):
 
 
 class DMChannel(_BaseChannel):
-    __slots__ = ("_state", "id")
+    __slots__ = ()
 
     def __init__(self, data: DMChannelData, state: State) -> None:
         self._state: State = state
@@ -253,7 +253,7 @@ class DMChannel(_BaseChannel):
 
 
 class VoiceChannel(_BaseChannel):
-    __slots__ = ("guild", "_state", "id")
+    __slots__ = ("guild",)
 
     def __init__(self, data: VoiceChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
@@ -269,7 +269,7 @@ class VoiceChannel(_BaseChannel):
 
 
 class CategoryChannel(_BaseChannel):
-    __slots__ = ("guild", "_state", "id", "name")
+    __slots__ = ("guild", "name")
 
     def __init__(self, data: CategoryChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
@@ -287,7 +287,7 @@ class CategoryChannel(_BaseChannel):
 
 
 class StoreChannel(_BaseChannel):
-    __slots__ = ("guild", "_state", "id")
+    __slots__ = ("guild",)
 
     def __init__(self, data: StoreChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
@@ -303,7 +303,7 @@ class StoreChannel(_BaseChannel):
 
 
 class Thread(_BaseChannel):
-    __slots__ = ("guild", "_state", "id")
+    __slots__ = ("guild",)
 
     def __init__(self, data: ThreadData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild
@@ -317,7 +317,7 @@ class Thread(_BaseChannel):
 
 
 class StageChannel(_BaseChannel):
-    __slots__ = ("guild", "_state", "id")
+    __slots__ = ("guild",)
 
     def __init__(self, data: StageChannelData, guild: Guild, state: State) -> None:
         self.guild: Guild = guild

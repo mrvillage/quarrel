@@ -129,6 +129,7 @@ class EventHandler:
             return
 
         guild = Guild(data, self.state)
+        self.state.add_guild(guild)
 
         if self.chunk_guilds:
             asyncio.create_task(self.async_handle_guild_create(guild))

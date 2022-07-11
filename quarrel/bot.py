@@ -209,6 +209,7 @@ class Bot:
             self.regex_components[component.pattern] = component
         elif component.custom_id is not MISSING:
             self.components[component.custom_id] = component
+            component.start_timeout(self)
         return self
 
     def add_component_from_class(self, component: Type[C]) -> Type[C]:
@@ -224,6 +225,7 @@ class Bot:
             self.regex_modals[modal.pattern] = modal
         elif modal.custom_id is not MISSING:
             self.modals[modal.custom_id] = modal
+            modal.start_timeout(self)
         return self
 
     def add_modal_from_class(self, modal: Type[M]) -> Type[M]:

@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+import asyncio
 import re
 from typing import TYPE_CHECKING, Generic, TypeVar, Union
 
@@ -225,6 +226,21 @@ class Button:
         cls.add_check(func)
         return func
 
+    def start_timeout(self, bot: Bot) -> None:
+        if self.grid and self.grid.timeout is not None:
+            bot.loop.call_later(self.grid.timeout, self.run_timeout, bot)
+
+    def run_timeout(self, bot: Bot) -> None:
+        if self.custom_id is MISSING:
+            return
+        asyncio.create_task(self.on_timeout())
+        modal = bot.components[self.custom_id]
+        if modal is self:
+            del bot.components[self.custom_id]
+
+    async def on_timeout(self) -> Any:
+        ...
+
 
 class SelectMenu:
     WIDTH: Final = 5
@@ -344,6 +360,19 @@ class SelectMenu:
         cls.add_check(func)
         return func
 
+    def start_timeout(self, bot: Bot) -> None:
+        if self.grid and self.grid.timeout is not None:
+            bot.loop.call_later(self.grid.timeout, self.run_timeout, bot)
+
+    def run_timeout(self, bot: Bot) -> None:
+        asyncio.create_task(self.on_timeout())
+        modal = bot.components[self.custom_id]
+        if modal is self:
+            del bot.components[self.custom_id]
+
+    async def on_timeout(self) -> Any:
+        ...
+
 
 class TextInput:
     WIDTH: Final = 5
@@ -429,6 +458,8 @@ class TextInputValue:
 
 class Modal(Generic[M]):
     checks: List[ModalCheck[M]]
+
+    __slots__ = ("title", "custom_id", "timeout", "pattern", "components")
 
     def __init__(
         self,
@@ -545,6 +576,19 @@ class Modal(Generic[M]):
         groups: Missing[Dict[str, str]],
         values: M,
     ) -> Any:
+        ...
+
+    def start_timeout(self, bot: Bot) -> None:
+        if self.timeout is not None:
+            bot.loop.call_later(self.timeout, self.run_timeout, bot)
+
+    def run_timeout(self, bot: Bot) -> None:
+        asyncio.create_task(self.on_timeout())
+        modal = bot.modals[self.custom_id]
+        if modal is self:
+            del bot.modals[self.custom_id]
+
+    async def on_timeout(self) -> Any:
         ...
 
 

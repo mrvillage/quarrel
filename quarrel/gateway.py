@@ -73,9 +73,13 @@ class Heartbeat:
         self.last_send: float = time.perf_counter()
 
     async def send(self) -> None:
-        if not self.handler.acked:
+        if (
+            not self.handler.acked
+            or self.handler.last_received + self.interval + 2 < time.perf_counter()
+        ):
             self.stop()
             await self.handler.close_and_resume()
+            return
         await self.handler.gateway.socket.send_json(
             {"op": 1, "d": self.handler.sequence}
         )
@@ -219,6 +223,7 @@ class GatewayHandler:
         self.heartbeat: Optional[Heartbeat] = None
         self.session_id: Optional[str] = None
         self.acked: bool = True
+        self.last_received: float = time.perf_counter()
 
     async def __aenter__(self) -> GatewayHandler:
         return self
@@ -255,6 +260,7 @@ class GatewayHandler:
     async def handle_message(
         self, message: GatewayDispatch
     ) -> Optional[GatewayDispatch]:
+        self.last_received = time.perf_counter()
         op = message["op"]
         data = message["d"]
         sequence = message.get("s")

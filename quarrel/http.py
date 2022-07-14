@@ -356,7 +356,7 @@ class HTTP:
     def get_original_interaction_response(self, token: str) -> Response[Message]:
         return self.request(
             "GET",
-            "/interactions/{application_id}/{webhook_token}/messages/@original",
+            "/webhooks/{application_id}/{webhook_token}/messages/@original",
             {
                 "application_id": self.application_id,
                 "webhook_token": token,
@@ -369,7 +369,7 @@ class HTTP:
     ) -> Response[Message]:
         return self.request(
             "PATCH",
-            "/interactions/{application_id}/{webhook_token}/messages/@original",
+            "/webhooks/{application_id}/{webhook_token}/messages/@original",
             {
                 "application_id": self.application_id,
                 "webhook_token": token,
@@ -380,7 +380,7 @@ class HTTP:
     def delete_original_interaction_response(self, token: str) -> Response[None]:
         return self.request(
             "DELETE",
-            "/interactions/{application_id}/{webhook_token}/messages/@original",
+            "/webhooks/{application_id}/{webhook_token}/messages/@original",
             {
                 "application_id": self.application_id,
                 "webhook_token": token,
@@ -391,7 +391,7 @@ class HTTP:
     def create_followup_message(self, token: str, data: Any) -> Response[Message]:
         return self.request(
             "POST",
-            "/interactions/{application_id}/{webhook_token}",
+            "/webhooks/{application_id}/{webhook_token}",
             {
                 "application_id": self.application_id,
                 "webhook_token": token,
@@ -402,7 +402,7 @@ class HTTP:
     def get_followup_message(self, token: str, message_id: int) -> Response[Message]:
         return self.request(
             "GET",
-            "/interactions/{application_id}/{webhook_token}/messages/{message_id}",
+            "/webhooks/{application_id}/{webhook_token}/messages/{message_id}",
             {
                 "application_id": self.application_id,
                 "webhook_token": token,
@@ -416,7 +416,7 @@ class HTTP:
     ) -> Response[Message]:
         return self.request(
             "PATCH",
-            "/interactions/{application_id}/{webhook_token}/messages/{message_id}",
+            "/webhooks/{application_id}/{webhook_token}/messages/{message_id}",
             {
                 "application_id": self.application_id,
                 "webhook_token": token,
@@ -428,7 +428,7 @@ class HTTP:
     def delete_followup_message(self, token: str, message_id: int) -> Response[None]:
         return self.request(
             "DELETE",
-            "/interactions/{application_id}/{webhook_token}/messages/{message_id}",
+            "/webhooks/{application_id}/{webhook_token}/messages/{message_id}",
             {
                 "application_id": self.application_id,
                 "webhook_token": token,

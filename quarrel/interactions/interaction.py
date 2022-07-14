@@ -82,6 +82,7 @@ class Interaction:
         "guild_locale",
         "resolved",
         "target_id",
+        "responded",
     )
 
     def __init__(self, data: InteractionData, state: State) -> None:
@@ -149,6 +150,7 @@ class Interaction:
             self.target_id: Missing[int] = utils.get_int_or_missing(
                 self.data.get("target_id", MISSING)
             )
+            self.responded: bool = False
 
     @property
     def channel(self) -> Channel:
@@ -216,6 +218,7 @@ class Interaction:
             grid.store(self.bot)
         if modal is not MISSING:
             modal.store(self.bot)
+        self.responded = True
 
     async def respond_with_message(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
         return await self.respond(

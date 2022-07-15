@@ -33,6 +33,7 @@ import aiohttp
 
 from . import utils
 from .enums import InteractionType
+from .errors import InvalidSessionError
 from .events import EventHandler
 from .gateway import GatewayClosure, GatewayHandler, UnknownGatewayMessageType
 from .http import HTTP
@@ -142,6 +143,9 @@ class Bot:
                     4014,
                 }:
                     raise
+                self.state.clear_for_reconnect()
+                await self.gateway_handler.reconnect()
+            except InvalidSessionError:
                 self.state.clear_for_reconnect()
                 await self.gateway_handler.reconnect()
 

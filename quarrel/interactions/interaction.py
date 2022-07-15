@@ -103,8 +103,9 @@ class Interaction:
         message = data.get("message", MISSING)
         member = data.get("member", MISSING)
         guild = self.guild
-        if member is not MISSING and guild is not None:
-            member = Member(member, MISSING, guild, state)
+        if member is not MISSING:
+            # TODO: if cache is not populated correctly, guild may be None
+            member = Member(member, MISSING, guild, state)  # type: ignore
             self.user: Union[Member, User] = member
         else:
             # there will always be a member or user included

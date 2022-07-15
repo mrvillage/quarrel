@@ -71,6 +71,7 @@ class EventHandler:
         self.guild_queue: Optional[asyncio.Queue[Guild]] = None
         self.chunk_guilds: bool = chunk_guilds
         self.chunks_queue: Dict[Tuple[int, str], asyncio.Queue[GuildMembersChunk]] = {}
+        self.ready: Optional[asyncio.Event] = asyncio.Event()
 
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
         self.bot.dispatch(event, *args, **kwargs)
@@ -90,6 +91,8 @@ class EventHandler:
         self.state.add_user(self.bot.user)
         if self.guild_queue is None:
             self.guild_queue = asyncio.Queue()
+        if self.ready is None:
+            self.ready = asyncio.Event()
         self.bot.loop.create_task(self.async_handle_ready(data))
 
     async def async_handle_ready(self, data: Dict[str, Any]) -> None:
@@ -116,6 +119,9 @@ class EventHandler:
 
         self.guild_queue = None
         self.dispatch("ready")
+        if self.ready:
+            self.ready.set()
+            self.ready = None
 
     def handle_resumed(self, data: Dict[str, Any]) -> None:
         ...

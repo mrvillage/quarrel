@@ -88,8 +88,10 @@ class Member:
     ) -> Member:
         self.joined_at: str = data["joined_at"]
         if not partial:
-            self.deaf: bool = data["deaf"]
-            self.mute: bool = data["mute"]
+            if (deaf := data.get("deaf", MISSING)) is not MISSING:
+                self.deaf: bool = deaf
+            if (mute := data.get("mute", MISSING)) is not MISSING:
+                self.mute: bool = mute
 
         self.role_ids: List[int] = [int(i) for i in data["roles"]]
 

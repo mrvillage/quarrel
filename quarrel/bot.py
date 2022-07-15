@@ -119,6 +119,7 @@ class Bot:
         self.regex_components: Dict[re.Pattern[str], Component] = {}
         self.modals: Dict[str, Modal[Any]] = {}
         self.regex_modals: Dict[re.Pattern[str], Modal[Any]] = {}
+        self.event_handler = EventHandler(self, self.loop)
 
     @property
     def gateway(self) -> Gateway:
@@ -126,7 +127,6 @@ class Bot:
 
     async def connect(self) -> None:
         self.gateway_handler = await GatewayHandler.connect(self)
-        self.event_handler = EventHandler(self, self.loop)
         while True:
             try:
                 async for message in self.gateway_handler:
@@ -364,3 +364,7 @@ class Bot:
 
     def get_user(self, user_id: int, /) -> Optional[User]:
         return self.state.get_user(user_id)
+
+    async def wait_until_ready(self) -> None:
+        if self.event_handler.ready:
+            await self.event_handler.ready.wait()

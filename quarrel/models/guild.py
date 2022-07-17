@@ -122,6 +122,7 @@ class Guild:
         self._state: State = state
         self.id: int = int(data["id"])
         self.update(data)
+        self._chunk_event: Optional[asyncio.Event] = None
 
     def update(self, data: GuildData) -> Guild:
         self.name: str = data["name"]
